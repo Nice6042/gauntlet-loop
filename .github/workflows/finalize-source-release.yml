@@ -1,0 +1,126 @@
+name: Materialize verified Gauntlet Loop source and release
+
+on:
+  push:
+    branches: [main]
+
+permissions:
+  contents: write
+  statuses: write
+
+concurrency:
+  group: gauntlet-loop-source-release
+  cancel-in-progress: false
+
+jobs:
+  release:
+    if: github.event.head_commit.message == 'release: materialize verified source and v1.0.0'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+
+      - name: Select or recover source
+        shell: bash
+        env:
+          SOURCE_URL: https://gauntlet-loop-ayush.serveo.net/gauntlet-source.tar.gz
+          SOURCE_SHA_URL: https://gauntlet-loop-ayush.serveo.net/gauntlet-source.sha256
+        run: |
+          set -euo pipefail
+          root="$RUNNER_TEMP/source"
+          rm -rf "$root" && mkdir -p "$root"
+          if test -f skills/gauntlet-loop/SKILL.md && test -f scripts/run_all.py; then
+            tar --exclude=.git -cf - . | tar -xf - -C "$root"
+          else
+            archive="$RUNNER_TEMP/source.tar.gz"
+            curl --fail --location --retry 15 --retry-all-errors --connect-timeout 20 --max-time 420 "$SOURCE_URL" -o "$archive"
+            expected="$(curl --fail --location --retry 15 --retry-all-errors --connect-timeout 20 --max-time 60 "$SOURCE_SHA_URL" | tr -d '[:space:]')"
+            [[ "$expected" =~ ^[0-9a-f]{64}$ ]]
+            echo "$expected  $archive" | sha256sum --check --strict
+            tar -xzf "$archive" -C "$root"
+            echo "SOURCE_SHA256=$expected" >> "$GITHUB_ENV"
+          fi
+          echo "SOURCE_ROOT=$root" >> "$GITHUB_ENV"
+
+      - name: Validate exact source and manifests
+        shell: bash
+        run: |
+          set -euo pipefail
+          for path in README.md LICENSE VERSION skills/gauntlet-loop/SKILL.md scripts/run_all.py .claude-plugin/marketplace.json .claude-plugin/plugin.json .codex-plugin/plugin.json .agents/plugins/marketplace.json; do
+            test -f "$SOURCE_ROOT/$path"
+          done
+          test "$(tr -d '[:space:]' < "$SOURCE_ROOT/VERSION")" = 1.0.0
+          cd "$SOURCE_ROOT"
+          python scripts/run_all.py
+          test -s dist/gauntlet-loop.skill
+          test -s dist/VALIDATION_REPORT.txt
+          test -s dist/security-scan.json
+          test -s dist/RELEASE_STATUS.json
+
+      - name: Publish final clean source
+        id: source
+        shell: bash
+        run: |
+          set -euo pipefail
+          find . -mindepth 1 -maxdepth 1 ! -name .git -exec rm -rf {} +
+          cp -a "$SOURCE_ROOT"/. .
+          test -d .git
+          rm -f .bootstrap-upload-test.txt
+          rm -f \
+            .github/workflows/bootstrap-release.yml \
+            .github/workflows/publish-gauntlet-loop.yml \
+            .github/workflows/publish-gauntlet-loop-final.yml \
+            .github/workflows/final-install-proof.yml \
+            .github/workflows/finalize-source-release.yml
+          python scripts/run_all.py
+          git config user.name 'Ayush Lochab'
+          git config user.email '193861067+Nice6042@users.noreply.github.com'
+          git add --all
+          while IFS= read -r path; do git add --force "$path"; done < <(find dist -maxdepth 1 -type f -print | sort)
+          git commit -m 'Initial release: Gauntlet Loop v1.0.0'
+          target="$(git rev-parse HEAD)"
+          git push origin HEAD:main
+          echo "target=$target" >> "$GITHUB_OUTPUT"
+
+      - name: Fresh public-clone validation
+        env:
+          TARGET_SHA: ${{ steps.source.outputs.target }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          clone="$RUNNER_TEMP/public-clone"
+          git clone --depth 1 https://github.com/Nice6042/gauntlet-loop.git "$clone"
+          cd "$clone"
+          test "$(git rev-parse HEAD)" = "$TARGET_SHA"
+          python scripts/run_all.py
+
+      - name: Create exact annotated tag and public release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TARGET_SHA: ${{ steps.source.outputs.target }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          gh release delete v1.0.0 --repo "$GITHUB_REPOSITORY" --yes 2>/dev/null || true
+          git push origin :refs/tags/v1.0.0 2>/dev/null || true
+          git tag -a v1.0.0 "$TARGET_SHA" -m 'Gauntlet Loop v1.0.0'
+          git push origin refs/tags/v1.0.0
+          cat > "$RUNNER_TEMP/release-notes.md" <<EOF
+          # Gauntlet Loop v1.0.0
+
+          Portable, explicitly invoked Builder–Critic multi-agent quality campaigns with dependency-safe parallel Loop Tasks, recursive Combiner integration loops, configurable Wowed thresholds, 26 independent quality gates, persistent evidence, recovery, and cross-host adapters.
+
+          The tagged source passed the full deterministic validation suite and a fresh public-clone rerun before release.
+
+          Tagged commit: \`$TARGET_SHA\`
+          EOF
+          mapfile -d '' assets < <(find dist -maxdepth 1 -type f -print0 | sort -z)
+          test "${#assets[@]}" -ge 4
+          gh release create v1.0.0 "${assets[@]}" --repo "$GITHUB_REPOSITORY" --title 'Gauntlet Loop v1.0.0' --notes-file "$RUNNER_TEMP/release-notes.md" --verify-tag
+          gh release view v1.0.0 --repo "$GITHUB_REPOSITORY" --json tagName,isDraft,isPrerelease,assets --jq 'select(.tagName == "v1.0.0" and .isDraft == false and .isPrerelease == false and (.assets | length) >= 4)'
+          gh api --method POST "repos/${GITHUB_REPOSITORY}/statuses/${TARGET_SHA}" -f state=success -f context='gauntlet-loop/source-release' -f description='Full suite, fresh clone, tag, and release passed' >/dev/null
