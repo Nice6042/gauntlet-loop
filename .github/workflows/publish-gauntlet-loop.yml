@@ -11,7 +11,7 @@ permissions:
   contents: read
 
 jobs:
-  probe-source:
+  validate-source:
     runs-on: ubuntu-latest
     timeout-minutes: 30
     steps:
@@ -20,128 +20,82 @@ jobs:
         with:
           python-version: '3.13'
 
-      - name: Probe immutable source-blob sequences and validate the first complete archive
+      - name: Reconstruct the immutable source payload and run every validation gate
         env:
-          GH_TOKEN: ${{ github.token }}
-          REPOSITORY: ${{ github.repository }}
+          SOURCE_REPOSITORY: Nice6042/prime-studio
+          SOURCE_COMMIT: d7eeaf0747abfaec9050cced11bd2f8d2906f1d3
         shell: bash
         run: |
           set -euo pipefail
+          base="https://raw.githubusercontent.com/${SOURCE_REPOSITORY}/${SOURCE_COMMIT}/.gauntlet-bootstrap"
+          parts_dir="${RUNNER_TEMP}/gauntlet-parts"
+          mkdir -p "$parts_dir"
 
-          g0=(
-            bd3bdb3f4e3adee9b43b6f42385d3f6dc5aa9d80
-            ef0d91b584405a4866692f93b8758f96a1ddd568
-          )
-          g1=(
-            c2c850dc8120503f1c5480b6b87f9352b8c0b703
-            fa5c9270b3980149dd5326f24d0503473b2fb173
-            1006b9e0fb8b41de26a1b49e9176038c5eadce22
-            2c1c02b21f2e46bb7734a09ab00fa4410ee083b8
-            6cd86b01daf8e14125fccc888757d63f8e05b83c
-            84ae7e030711c9bdcede76e2f2bf08ba1cb75657
-            7c47f8648df6798f4faa5b3506dc71b17fab51f0
-            8cbc195bd25a0185bfe07344d6539b8917742e34
-            8508d66057ab3051aeb673acc7e878db37434dc8
-            0ec5c5b3cf7a906527138f25077950cfd2588a95
-            a8010038c97ba5d50c30c6a910b1851dd770e70b
-            37826e13032ad66f3b5c889ebb884ec49d04e051
-            8f85091b25e29b4dc70c9de202b3ede53bb1e606
-            2ed19e80b431556d7bf942e15d710768c22e8ff4
-          )
-          g2=(
-            6a0e72dc5a704d43028cbf5caf7591cfbc7cfdb7
-            192ba0198e7e35841495f39c81b45edb91200d1e
-            d2e86108a9678b77aafb2409981f7c747fd2b89c
-            f08ca5b770da7a498ad0bfc1d82865764b516d5c
-            f82da8394c45808baa18b27a7f5cc7b49de07698
-            07730b8dae1de5348ad7efa8ba0ff82f9f9d06dc
-            5382dba75876f764e095ac66be47591d7174c8f1
-            f8a9c3c23167cb1b2acd01bc13998ac4a5b9142e
-            a4310f8dec37d24fc04a3a654355fb819a7303d8
-          )
-          g3=(
-            30d74d258442c7c65512eafab474568dd706c430
-            ceef164f8dfc7830076daa6f1cfceebbf353f696
-            97eb3bf2d0fbcad2f87686661397803ddcebb944
-          )
-          g4=(
-            5d803704e72dd42fede13f0cfead91f3c59c9e28
-            b0a247ba6460d016a8d90d09293ae710eb1bebc9
-            3cc5e38c714aa179ec017be1ba96c798f478203f
-            d7184bfd91c6e4ca0952323d3cfab1ea48454855
-            8ee17cabf79cd3ec722ebccbc72b5101774696ec
-            79579f98076708d0ecf75f1d300052425f970e69
-            1224d93fb821d51efff8487c00144bbdd4f6c126
-          )
-
-          fetch_sequence() {
-            local output="$1"
-            shift
-            : > "$output"
-            local blob
-            for blob in "$@"; do
-              gh api "repos/${REPOSITORY}/git/blobs/${blob}" --jq .content \
-                | tr -d '\n' | base64 --decode >> "$output"
-            done
-          }
+          for suffix in 000 001 002 003 004 005 006 007 008 009 009a 009b 010 011 012 013; do
+            curl --fail --location --retry 5 --retry-all-errors \
+              "${base}/payload.part-${suffix}" \
+              --output "${parts_dir}/${suffix}"
+          done
 
           validate_candidate() {
             local name="$1"
             shift
+            local encoded="${RUNNER_TEMP}/${name}.b64"
             local archive="${RUNNER_TEMP}/${name}.tar.gz"
             local extract="${RUNNER_TEMP}/${name}-extract"
+            : > "$encoded"
+            local suffix
+            for suffix in "$@"; do
+              cat "${parts_dir}/${suffix}" >> "$encoded"
+            done
+            tr -d '\r\n\t ' < "$encoded" | base64 --decode > "$archive" || return 1
+            tar -tzf "$archive" >/dev/null 2>&1 || return 1
             rm -rf "$extract"
             mkdir -p "$extract"
-            echo "Probing ${name} with $# immutable blobs"
-            if ! fetch_sequence "$archive" "$@"; then
-              echo "${name}: blob acquisition failed"
-              return 1
-            fi
-            if ! tar -tzf "$archive" >/dev/null 2>&1; then
-              echo "${name}: not a complete gzip tar archive"
-              return 1
-            fi
             tar -xzf "$archive" -C "$extract"
+
             local skill
             skill="$(find "$extract" -type f -path '*/skills/gauntlet-loop/SKILL.md' -print -quit)"
-            if [[ -z "$skill" ]]; then
-              echo "${name}: archive lacks canonical SKILL.md"
-              return 1
-            fi
+            [[ -n "$skill" ]] || return 1
             local root="${skill%/skills/gauntlet-loop/SKILL.md}"
-            test -f "$root/scripts/run_all.py"
-            test -f "$root/README.md"
-            test -f "$root/LICENSE"
-            test -f "$root/.claude-plugin/marketplace.json"
-            test -f "$root/.codex-plugin/plugin.json"
-            test -f "$root/.agents/plugins/marketplace.json"
+
+            for required in \
+              README.md \
+              LICENSE \
+              VERSION \
+              scripts/run_all.py \
+              .claude-plugin/marketplace.json \
+              .claude-plugin/plugin.json \
+              .codex-plugin/plugin.json \
+              .agents/plugins/marketplace.json; do
+              test -f "${root}/${required}"
+            done
+
             (
               cd "$root"
               python scripts/run_all.py
             )
+
             echo "SUCCESS_CANDIDATE=${name}"
             echo "SOURCE_SHA256=$(sha256sum "$archive" | awk '{print $1}')"
             echo "SOURCE_ROOT=${root}"
+            find "$root" -type f | LC_ALL=C sort | sed "s#^${root}/##" > "${RUNNER_TEMP}/source-files.txt"
+            echo "SOURCE_FILE_COUNT=$(wc -l < "${RUNNER_TEMP}/source-files.txt")"
             return 0
           }
 
-          candidates=(g1 g2 g3 g4 g0_g1 g1_g2 g1_g2_g3 g1_g2_g3_g4 g0_g1_g2_g3_g4)
-          for candidate in "${candidates[@]}"; do
-            case "$candidate" in
-              g1) blobs=("${g1[@]}") ;;
-              g2) blobs=("${g2[@]}") ;;
-              g3) blobs=("${g3[@]}") ;;
-              g4) blobs=("${g4[@]}") ;;
-              g0_g1) blobs=("${g0[@]}" "${g1[@]}") ;;
-              g1_g2) blobs=("${g1[@]}" "${g2[@]}") ;;
-              g1_g2_g3) blobs=("${g1[@]}" "${g2[@]}" "${g3[@]}") ;;
-              g1_g2_g3_g4) blobs=("${g1[@]}" "${g2[@]}" "${g3[@]}" "${g4[@]}") ;;
-              g0_g1_g2_g3_g4) blobs=("${g0[@]}" "${g1[@]}" "${g2[@]}" "${g3[@]}" "${g4[@]}") ;;
-            esac
-            if validate_candidate "$candidate" "${blobs[@]}"; then
-              exit 0
-            fi
-          done
+          prefix=(000 001 002 003 004 005 006 007 008)
+          suffix=(010 011 012 013)
 
-          echo 'No uploaded immutable-blob sequence reconstructed a valid, fully tested source archive.' >&2
+          if validate_candidate split "${prefix[@]}" 009a 009b "${suffix[@]}"; then
+            exit 0
+          fi
+          if validate_candidate legacy "${prefix[@]}" 009 "${suffix[@]}"; then
+            exit 0
+          fi
+          if validate_candidate combined "${prefix[@]}" 009 009a 009b "${suffix[@]}"; then
+            exit 0
+          fi
+
+          echo 'No immutable payload ordering produced a complete, valid, fully tested Gauntlet Loop source archive.' >&2
           exit 1
