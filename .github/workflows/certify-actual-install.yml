@@ -1,0 +1,123 @@
+name: Certify actual Agent Skills installation
+
+on:
+  push:
+    branches: [main]
+
+permissions:
+  contents: write
+  statuses: write
+
+concurrency:
+  group: gauntlet-loop-actual-install-certification
+  cancel-in-progress: false
+
+jobs:
+  certify:
+    if: github.event.head_commit.message == 'release: certify actual Agent Skills installation'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+
+      - name: Revalidate complete source
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -f docs/PUBLICATION_VERIFIED.md
+          for path in README.md LICENSE VERSION skills/gauntlet-loop/SKILL.md scripts/run_all.py .claude-plugin/marketplace.json .claude-plugin/plugin.json .codex-plugin/plugin.json .agents/plugins/marketplace.json; do
+            test -f "$path"
+          done
+          python scripts/run_all.py
+
+      - name: Install from public GitHub into a clean temporary project
+        shell: bash
+        run: |
+          set -euo pipefail
+          root="$RUNNER_TEMP/actual-install"
+          rm -rf "$root"
+          mkdir -p "$root/home" "$root/project"
+          cd "$root/project"
+          export HOME="$root/home"
+          export XDG_CONFIG_HOME="$root/home/.config"
+          export XDG_DATA_HOME="$root/home/.local/share"
+          export CI=1
+          npx -y skills@latest add Nice6042/gauntlet-loop --skill gauntlet-loop --yes
+          installed="$(find "$root" -type f -path '*/gauntlet-loop/SKILL.md' -print -quit)"
+          test -n "$installed"
+          grep -q '^name: gauntlet-loop$' "$installed"
+          grep -q 'Builder' "$installed"
+          echo "INSTALLED_PATH=$installed" >> "$GITHUB_ENV"
+
+      - name: Add durable actual-install proof
+        id: commit
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p docs
+          cat > docs/INSTALLATION_VERIFIED.md <<'EOF'
+          # Installation verification
+
+          The following public installation command was executed non-interactively in a clean temporary project and produced an installed `gauntlet-loop/SKILL.md` that passed payload checks:
+
+          ```bash
+          npx -y skills@latest add Nice6042/gauntlet-loop --skill gauntlet-loop --yes
+          ```
+
+          This proof is in addition to the repository's full validation suite, public-clone validation, manifest validation, annotated release tag, and release-asset verification.
+          EOF
+          rm -f .github/workflows/certify-actual-install.yml
+          git config user.name 'Ayush Lochab'
+          git config user.email '193861067+Nice6042@users.noreply.github.com'
+          git add --all
+          git commit -m 'docs: certify actual Agent Skills installation'
+          target="$(git rev-parse HEAD)"
+          git push origin HEAD:main
+          echo "target=$target" >> "$GITHUB_OUTPUT"
+
+      - name: Validate exact certified public commit
+        env:
+          TARGET_SHA: ${{ steps.commit.outputs.target }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          clone="$RUNNER_TEMP/certified-clone"
+          git clone --depth 1 https://github.com/Nice6042/gauntlet-loop.git "$clone"
+          cd "$clone"
+          test "$(git rev-parse HEAD)" = "$TARGET_SHA"
+          test -f docs/PUBLICATION_VERIFIED.md
+          test -f docs/INSTALLATION_VERIFIED.md
+          python scripts/run_all.py
+
+      - name: Rebind v1.0.0 and release to final certified commit
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TARGET_SHA: ${{ steps.commit.outputs.target }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          gh release delete v1.0.0 --repo "$GITHUB_REPOSITORY" --yes 2>/dev/null || true
+          git push origin :refs/tags/v1.0.0 2>/dev/null || true
+          git tag -a v1.0.0 "$TARGET_SHA" -m 'Gauntlet Loop v1.0.0'
+          git push origin refs/tags/v1.0.0
+          cat > "$RUNNER_TEMP/release-notes.md" <<EOF
+          # Gauntlet Loop v1.0.0
+
+          Portable, explicitly invoked Builder–Critic multi-agent quality campaigns with dependency-safe parallel Loop Tasks, recursive Combiner integration loops, configurable Wowed thresholds, 26 independent quality gates, persistent evidence, recovery, and cross-host adapters.
+
+          This tag points to the final certified public source. The complete suite, fresh public-clone suite, cross-host manifests, Agent Skills discovery, and an actual clean-project installation all passed.
+
+          Certified commit: \`$TARGET_SHA\`
+          EOF
+          mapfile -d '' assets < <(find dist -maxdepth 1 -type f -print0 | sort -z)
+          test "${#assets[@]}" -ge 4
+          gh release create v1.0.0 "${assets[@]}" --repo "$GITHUB_REPOSITORY" --title 'Gauntlet Loop v1.0.0' --notes-file "$RUNNER_TEMP/release-notes.md" --verify-tag
+          tag_object="$(gh api "repos/${GITHUB_REPOSITORY}/git/ref/tags/v1.0.0" --jq .object.sha)"
+          test "$(gh api "repos/${GITHUB_REPOSITORY}/git/tags/${tag_object}" --jq .object.sha)" = "$TARGET_SHA"
+          gh release view v1.0.0 --repo "$GITHUB_REPOSITORY" --json isDraft,isPrerelease,assets --jq 'select(.isDraft == false and .isPrerelease == false and (.assets | length) >= 4)'
+          gh api --method POST "repos/${GITHUB_REPOSITORY}/statuses/${TARGET_SHA}" -f state=success -f context='gauntlet-loop/actual-install' -f description='Clean-project Agent Skills installation and full validation passed' >/dev/null
