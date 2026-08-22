@@ -20,7 +20,7 @@ jobs:
         with:
           python-version: '3.13'
 
-      - name: Reconstruct the immutable source payload and run every validation gate
+      - name: Reconstruct, identify, and validate the immutable source payload
         env:
           SOURCE_REPOSITORY: Nice6042/prime-studio
           SOURCE_COMMIT: d7eeaf0747abfaec9050cced11bd2f8d2906f1d3
@@ -31,71 +31,70 @@ jobs:
           parts_dir="${RUNNER_TEMP}/gauntlet-parts"
           mkdir -p "$parts_dir"
 
-          for suffix in 000 001 002 003 004 005 006 007 008 009 009a 009b 010 011 012 013; do
-            curl --fail --location --retry 5 --retry-all-errors \
+          for suffix in 000 001 002 003 004 005 006 007 008 009a 009b 010 011 012 013; do
+            curl --fail --location --retry 5 --retry-all-errors --silent --show-error \
               "${base}/payload.part-${suffix}" \
               --output "${parts_dir}/${suffix}"
           done
 
-          validate_candidate() {
-            local name="$1"
-            shift
-            local encoded="${RUNNER_TEMP}/${name}.b64"
-            local archive="${RUNNER_TEMP}/${name}.tar.gz"
-            local extract="${RUNNER_TEMP}/${name}-extract"
-            : > "$encoded"
-            local suffix
-            for suffix in "$@"; do
-              cat "${parts_dir}/${suffix}" >> "$encoded"
-            done
-            tr -d '\r\n\t ' < "$encoded" | base64 --decode > "$archive" || return 1
-            tar -tzf "$archive" >/dev/null 2>&1 || return 1
+          encoded="${RUNNER_TEMP}/source.b64"
+          gzip_payload="${RUNNER_TEMP}/source.gz"
+          inner="${RUNNER_TEMP}/source.inner"
+          extract="${RUNNER_TEMP}/source-extract"
+          : > "$encoded"
+          for suffix in 000 001 002 003 004 005 006 007 008 009a 009b 010 011 012 013; do
+            cat "${parts_dir}/${suffix}" >> "$encoded"
+          done
+
+          tr -d '\r\n\t ' < "$encoded" | base64 --decode > "$gzip_payload"
+          echo "ENCODED_BYTES=$(wc -c < "$encoded")"
+          echo "GZIP_BYTES=$(wc -c < "$gzip_payload")"
+          echo "GZIP_SHA256=$(sha256sum "$gzip_payload" | awk '{print $1}')"
+          file "$gzip_payload"
+          gzip --test "$gzip_payload"
+          gzip --decompress --stdout "$gzip_payload" > "$inner"
+          echo "INNER_BYTES=$(wc -c < "$inner")"
+          echo "INNER_SHA256=$(sha256sum "$inner" | awk '{print $1}')"
+          file "$inner"
+          head -c 64 "$inner" | od -An -tx1 -v
+
+          rm -rf "$extract"
+          mkdir -p "$extract"
+          if tar -tf "$inner" >/dev/null 2>&1; then
+            echo 'INNER_FORMAT=tar'
+            tar -xf "$inner" -C "$extract"
+          elif unzip -t "$inner" >/dev/null 2>&1; then
+            echo 'INNER_FORMAT=zip'
+            unzip -q "$inner" -d "$extract"
+          elif git bundle verify "$inner" >/dev/null 2>&1; then
+            echo 'INNER_FORMAT=git-bundle'
             rm -rf "$extract"
-            mkdir -p "$extract"
-            tar -xzf "$archive" -C "$extract"
-
-            local skill
-            skill="$(find "$extract" -type f -path '*/skills/gauntlet-loop/SKILL.md' -print -quit)"
-            [[ -n "$skill" ]] || return 1
-            local root="${skill%/skills/gauntlet-loop/SKILL.md}"
-
-            for required in \
-              README.md \
-              LICENSE \
-              VERSION \
-              scripts/run_all.py \
-              .claude-plugin/marketplace.json \
-              .claude-plugin/plugin.json \
-              .codex-plugin/plugin.json \
-              .agents/plugins/marketplace.json; do
-              test -f "${root}/${required}"
-            done
-
-            (
-              cd "$root"
-              python scripts/run_all.py
-            )
-
-            echo "SUCCESS_CANDIDATE=${name}"
-            echo "SOURCE_SHA256=$(sha256sum "$archive" | awk '{print $1}')"
-            echo "SOURCE_ROOT=${root}"
-            find "$root" -type f | LC_ALL=C sort | sed "s#^${root}/##" > "${RUNNER_TEMP}/source-files.txt"
-            echo "SOURCE_FILE_COUNT=$(wc -l < "${RUNNER_TEMP}/source-files.txt")"
-            return 0
-          }
-
-          prefix=(000 001 002 003 004 005 006 007 008)
-          suffix=(010 011 012 013)
-
-          if validate_candidate split "${prefix[@]}" 009a 009b "${suffix[@]}"; then
-            exit 0
-          fi
-          if validate_candidate legacy "${prefix[@]}" 009 "${suffix[@]}"; then
-            exit 0
-          fi
-          if validate_candidate combined "${prefix[@]}" 009 009a 009b "${suffix[@]}"; then
-            exit 0
+            git clone "$inner" "$extract"
+          else
+            echo 'The gzip wrapper is valid, but the inner payload is not tar, ZIP, or Git bundle.' >&2
+            exit 1
           fi
 
-          echo 'No immutable payload ordering produced a complete, valid, fully tested Gauntlet Loop source archive.' >&2
-          exit 1
+          skill="$(find "$extract" -type f -path '*/skills/gauntlet-loop/SKILL.md' -print -quit)"
+          [[ -n "$skill" ]]
+          root="${skill%/skills/gauntlet-loop/SKILL.md}"
+
+          for required in \
+            README.md \
+            LICENSE \
+            VERSION \
+            scripts/run_all.py \
+            .claude-plugin/marketplace.json \
+            .claude-plugin/plugin.json \
+            .codex-plugin/plugin.json \
+            .agents/plugins/marketplace.json; do
+            test -f "${root}/${required}"
+          done
+
+          (
+            cd "$root"
+            python scripts/run_all.py
+          )
+
+          echo "SOURCE_ROOT=${root}"
+          echo "SOURCE_FILE_COUNT=$(find "$root" -type f | wc -l)"
