@@ -14,7 +14,7 @@ concurrency:
 
 jobs:
   publish:
-    if: github.event.head_commit.message == 'bootstrap: publish Gauntlet Loop v1.0.0'
+    if: "github.event.head_commit.message == 'bootstrap: publish Gauntlet Loop v1.0.0'"
     runs-on: ubuntu-24.04
     timeout-minutes: 40
     steps:
@@ -26,7 +26,7 @@ jobs:
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
-          python-version: '3.13'
+          python-version: "3.13"
 
       - name: Acquire and integrity-check frozen source
         env:
@@ -105,6 +105,7 @@ jobs:
 
       - name: Tag exact validated commit
         env:
+          GH_TOKEN: ${{ github.token }}
           TARGET_SHA: ${{ steps.publish.outputs.commit }}
         shell: bash
         run: |
@@ -113,9 +114,6 @@ jobs:
           git push origin :refs/tags/v1.0.0 2>/dev/null || true
           git tag -a v1.0.0 "$TARGET_SHA" -m 'Gauntlet Loop v1.0.0'
           git push origin refs/tags/v1.0.0
-        env:
-          GH_TOKEN: ${{ github.token }}
-          TARGET_SHA: ${{ steps.publish.outputs.commit }}
 
       - name: Create verified GitHub release
         env:

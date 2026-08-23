@@ -16,7 +16,7 @@ concurrency:
 
 jobs:
   prove:
-    if: github.event.head_commit.message == 'release: prove public installability'
+    if: "github.event.head_commit.message == 'release: prove public installability'"
     runs-on: ubuntu-24.04
     timeout-minutes: 50
     steps:
@@ -28,7 +28,7 @@ jobs:
       - name: Set up Python and Node
         uses: actions/setup-python@v5
         with:
-          python-version: '3.13'
+          python-version: "3.13"
 
       - name: Select current source or recover frozen source
         shell: bash

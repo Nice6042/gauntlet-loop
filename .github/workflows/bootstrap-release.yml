@@ -13,7 +13,7 @@ concurrency:
 
 jobs:
   publish:
-    if: github.event.head_commit.message == 'bootstrap: initialize standalone release publisher'
+    if: "github.event.head_commit.message == 'bootstrap: initialize standalone release publisher'"
     runs-on: ubuntu-latest
     timeout-minutes: 30
     steps:
@@ -26,7 +26,7 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          for attempt in $(seq 1 120); do
+          for _ in $(seq 1 120); do
             head_sha="$(curl --fail --silent --show-error \
               --header "Accept: application/vnd.github+json" \
               --header "Authorization: Bearer ${GH_TOKEN}" \
@@ -50,7 +50,7 @@ jobs:
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
-          python-version: '3.13'
+          python-version: "3.13"
 
       - name: Validate the exact release source
         shell: bash
@@ -109,6 +109,6 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          test "$(gh api repos/${GITHUB_REPOSITORY}/commits/main --jq .sha)" = "$TARGET_SHA"
-          test "$(gh api repos/${GITHUB_REPOSITORY}/git/ref/tags/v1.0.0 --jq .object.type)" = "tag"
+          test "$(gh api "repos/${GITHUB_REPOSITORY}/commits/main" --jq .sha)" = "$TARGET_SHA"
+          test "$(gh api "repos/${GITHUB_REPOSITORY}/git/ref/tags/v1.0.0" --jq .object.type)" = "tag"
           gh release view v1.0.0 --json tagName,isDraft,isPrerelease --jq 'select(.tagName == "v1.0.0" and .isDraft == false and .isPrerelease == false)'
