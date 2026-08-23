@@ -31,19 +31,17 @@ jobs:
       - name: Acquire and integrity-check frozen source
         env:
           SOURCE_URL: https://gauntlet-loop-ayush.serveo.net/gauntlet-source.tar.gz
-          SOURCE_SHA_URL: https://gauntlet-loop-ayush.serveo.net/gauntlet-source.sha256
+          # Frozen source digest recorded in b196fd951dda4f6c08b82ff70d17866ba996edf6.
+          SOURCE_SHA256: d56ea5695dc579b9c9167a0862a101caf1e19afd83b3cb1686188b10f0e4a123
         shell: bash
         run: |
           set -euo pipefail
           archive="$RUNNER_TEMP/gauntlet-source.tar.gz"
-          checksum="$RUNNER_TEMP/gauntlet-source.sha256"
           curl --fail --location --retry 8 --retry-all-errors --connect-timeout 20 --max-time 300 "$SOURCE_URL" -o "$archive"
-          curl --fail --location --retry 8 --retry-all-errors --connect-timeout 20 --max-time 60 "$SOURCE_SHA_URL" -o "$checksum"
-          expected="$(tr -d '[:space:]' < "$checksum")"
-          [[ "$expected" =~ ^[0-9a-f]{64}$ ]]
-          echo "$expected  $archive" | sha256sum --check --strict
+          [[ "$SOURCE_SHA256" =~ ^[0-9a-f]{64}$ ]]
+          printf '%s  %s\n' "$SOURCE_SHA256" "$archive" | sha256sum --check --strict
           tar -tzf "$archive" >/dev/null
-          echo "SOURCE_SHA256=$expected" >> "$GITHUB_ENV"
+          echo "SOURCE_SHA256=$SOURCE_SHA256" >> "$GITHUB_ENV"
           echo "SOURCE_ARCHIVE=$archive" >> "$GITHUB_ENV"
 
       - name: Extract and inspect standalone source
