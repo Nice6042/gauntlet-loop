@@ -1,15 +1,14 @@
 ---
 name: gauntlet-loop
 description: >-
-  Explicitly invoked multi-agent Builder-Critic quality campaign. Use only when
-  the owner explicitly asks to use Gauntlet Loop. Decomposes work into
-  dependency-safe parallel Loop Tasks, iterates Builder and independent Critic
-  agents until the owner-selected completion standard is met, integrates waves
-  through Combiner and Integration-Critic loops, and preserves evidence and
-  resumable state.
+  Explicitly invoked multi-agent delivery, improvement, and Bug Hunt campaigns.
+  Use only when the owner explicitly asks to use Gauntlet Loop. Runs
+  dependency-safe parallel work with independent adversarial review,
+  operator-selected model/effort and concurrency, isolated bug discovery and
+  repair, integration gates, reproducible evidence, and resumable state.
 license: Apache-2.0
 metadata:
-  version: 1.0.0
+  version: 1.1.0
   author: Ayush Lochab
 ---
 
@@ -17,37 +16,50 @@ metadata:
 
 ## Activation
 
-Activate **only** when the owner explicitly requests Gauntlet Loop, for example:
+Activate **only** when the owner explicitly requests Gauntlet Loop and select
+the requested campaign mode, for example:
 
-- `Use Gauntlet Loop on this task.`
-- `Run this through Gauntlet Loop.`
-- `Start a Gauntlet campaign.`
+- `Use Gauntlet Loop on this delivery task.`
+- `Run this improvement through Gauntlet Loop.`
+- `Use Gauntlet Loop in Bug Hunt mode on this system.`
+- `Start a Finder-Verifier-Fixer campaign.`
 
 Do not activate for mentions, questions about the skill, quoted examples,
-negated requests, or generic requests for high quality.
+negated requests, generic requests for high quality, or an ordinary request to
+fix a known bug. If the request is explicit but the mode is ambiguous, freeze
+the mode during owner intake.
 
 ## Mission
 
-Turn a user goal into a recursive, evidence-backed multi-agent campaign:
+Run one of two evidence-backed campaign modes:
 
-`Main Agent -> parallel Loop Tasks -> Combiner Loop -> Main Review -> later waves -> final independent audit`
+- **Delivery/Improvement** — create a project, add a feature, or improve an
+  existing artifact through Builder-Critic loops.
+- **Bug Hunt** — systematically discover, specify, repair, and independently
+  verify bugs in an existing system through isolated Finder-Verifier-Fixer
+  loops.
 
-A Loop Task is:
+Delivery/Improvement pipeline:
 
-`Builder -> independent Critic -> verified repair -> complete re-audit -> repeat`
+`Main Agent -> parallel Builder-Critic Loop Tasks -> Combiner -> Integration Critic -> Main Review -> later waves -> final independent audit`
 
-The skill must never turn a cost limit, iteration limit, unavailable tool, or
-critic fatigue into a false success verdict.
+Bug Hunt pipeline:
+
+`Main Agent -> area worktrees -> Finder -> Spec Verifier <-> Finder -> Fixer -> fresh Fix Verifier <-> Fixer -> Combiner -> Final Tester -> Integration Verifier -> merge -> Main verification`
+
+The skill must never turn a cost limit, review limit, unavailable tool,
+underfilled concurrency target, or critic fatigue into a false success verdict.
 
 ## Owner intake before execution
 
 Before starting implementation, establish and freeze:
 
-1. Exact desired deliverable and success criteria.
-2. Starting repository/artifacts and target environments.
-3. Must-haves, prohibitions, constraints, and non-goals.
-4. Comparison references and exactly which dimensions should be compared.
-5. Completion standard:
+1. Campaign mode: Delivery/Improvement or Bug Hunt.
+2. Exact desired deliverable, scope, success criteria, and exclusions.
+3. Starting repository/artifacts, base commit, and target environments.
+4. Must-haves, prohibitions, constraints, and non-goals.
+5. Comparison references and exactly which dimensions should be compared.
+6. Completion standard:
    - **Absolute Wowed** — every applicable metric has no identified gap and no
      concrete evidence-backed room for improvement within the approved scope.
    - **Strict Wowed** — no material actionable gap remains and all production
@@ -56,14 +68,22 @@ Before starting implementation, establish and freeze:
      findings, critic agreement, and evidence requirements per metric.
    - **Main-Agent Recommended** — Main Agent proposes a mixed contract and the
      owner approves it.
-6. Resource policy: quality-first, budget-capped, iteration-capped, or adaptive.
-7. Builder, Critic, fresh Critic, Combiner, Integration Critic, and final-review
-   model/effort policy, including defaults and per-task overrides.
-8. Maximum useful concurrency and cost/usage constraints.
-9. Permission boundaries for installs, external services, destructive actions,
-   deployment, publishing, credentials, paid actions, and public side effects.
+7. Resource policy: quality-first, budget-capped, iteration-capped, or adaptive.
+8. Default and per-task model/effort for every applicable role: Main Agent,
+   Builder, Critic, Finder, Spec Verifier, Fixer, Fix Verifier, fresh closure
+   critic, Combiner, Final Tester, Integration Verifier, and final review.
+9. Concurrency policy: `ADAPTIVE`, `CEILING(N)`, or `SUSTAINED(N)`, plus
+   cost/usage constraints. `SUSTAINED(N)` requires immediate useful-work
+   replenishment while at least `N` compatible ready tasks exist.
+10. Worktree/workspace isolation, ownership, and merge policy.
+11. Permission boundaries for installs, external services, destructive actions,
+    deployment, publishing, credentials, paid actions, and public side effects.
+12. Required reproductions, tests, inspections, target evidence, and campaign
+    checkpoint location.
 
 Do not begin the campaign until the owner approves the resulting campaign plan.
+Use `templates/owner-intake.md`; Bug Hunt campaigns also use
+`templates/bug-campaign-state.md`.
 
 ## Capability discovery
 
@@ -88,27 +108,34 @@ rather than pretending it was verified.
 
 ## Decompose into a dependency graph
 
-The Main Agent chooses the number of Loop Tasks adaptively. There is no fixed
-number. Prefer the smallest number of independently executable tasks that
-maximizes useful parallelism without creating integration conflicts.
+The Main Agent chooses the smallest safe task and area boundaries that expose
+the operator-requested useful parallelism without creating integration
+conflicts. A requested concurrency number does not permit duplicate, invented,
+or dependency-violating work.
 
 For each task define a sealed contract containing:
 
 - objective and scope;
-- owned files/components/artifacts;
+- owned files/components/artifacts and workspace;
 - shared interfaces and invariants;
-- dependencies and blockers;
+- dependencies, blockers, and ready conditions;
 - inputs and outputs;
 - acceptance criteria;
 - comparison references;
 - applicable quality metrics;
 - required evidence and tests;
-- Builder/Critic model and effort;
+- role, model, and effort;
 - permissions and non-goals.
 
 Tasks may run in parallel only when ownership, interfaces, side effects, and
 validation surfaces are sufficiently disjoint. Shared contracts cannot be
-silently changed by an individual Builder.
+silently changed by an individual worker. One writer at a time may mutate a
+worktree or equivalent workspace.
+
+Apply the scheduler and counting rules in `references/concurrency.md`. For
+`SUSTAINED(N)`, maintain `N` useful active subagents whenever the ready graph
+supports it and launch a replacement in the same orchestration turn when a slot
+opens. Record every unavoidable underfill and retry when its blocker changes.
 
 ## The 26 universal quality metrics
 
@@ -207,6 +234,40 @@ not just previous findings.
 Repeat until the configured completion contract is satisfied or a truthful
 non-success terminal state is reached.
 
+## Bug Hunt campaign mode
+
+Use Bug Hunt only for finding and fixing defects in an existing system. The
+Main Agent maps complete in-scope coverage into dependency-safe areas and
+creates one isolated branch/worktree or equivalent workspace per area. Assign
+exactly one Finder per area; Finder and Spec Verifier are read-only, and one
+Fixer is the sole area writer.
+
+The Finder batches reproducible candidates and creates one root-cause
+specification per bug. A separate Spec Verifier adversarially checks that each
+candidate is a real defect, the root cause is proven, affected boundaries are
+complete, and the proposed fix is the smallest robust future-maintainable
+root-cause correction.
+
+Each candidate may receive at most three Spec Verifier decisions, with the
+initial decision counting as one. Rejected specifications return to the Finder
+for evidence-backed correction and complete re-review. After the third
+non-approval, record `SPEC_REVIEW_LIMIT_REACHED`; never relabel it as complete.
+Approved specifications proceed as an area batch without waiting for unrelated
+unresolved candidates unless a dependency requires it.
+
+One Fixer independently validates and implements the complete approved area
+batch, reruns original reproductions, and checks regressions and fix
+interactions. A fresh Fix Verifier then adversarially reviews every fix and the
+complete area. Valid findings loop back to the Fixer followed by complete
+re-audit until the configured completion contract is met or an honest
+non-success terminal state is reached.
+
+After all area loops terminate, a Combiner integrates approved worktrees, a
+fresh Final Tester exercises the combined system, an Integration Verifier
+audits it, and the Main Agent independently verifies the reviewed merged state.
+Follow `references/bug-hunt-protocol.md`; use `templates/bug-spec.md` and
+`templates/bug-campaign-state.md`.
+
 ## Completion semantics
 
 ### Absolute Wowed
@@ -284,6 +345,11 @@ being hidden in an uncontrolled integration patch.
 
 Only the integration verdict can close a wave.
 
+In Bug Hunt mode, isolated area approval is only an input to integration. The
+Combiner, Final Tester, and Integration Verifier must follow
+`references/bug-hunt-protocol.md`; unresolved specifications and blocked fixes
+remain visible and cannot be merged or reported as repaired.
+
 ## Main review and later waves
 
 After each integrated wave, the Main Agent compares the actual combined result
@@ -322,8 +388,9 @@ The final product verdict cannot exceed the weakest system-level hard gate.
 ## Evidence and checkpoint requirements
 
 Persist state after intake approval, capability discovery, campaign-plan
-approval, each Builder handoff, each Critic report, finding transitions, task
-verdicts, integration attempts/verdicts, Main reviews, and final delivery.
+approval, every role handoff, adversarial review, finding transition, task or
+area verdict, concurrency underfill, integration attempt/verdict, Main review,
+and final delivery.
 
 Use stable IDs, timestamps, repository identity, base/head commits, artifact
 hashes, role/model records, and evidence locations. Keep findings and evidence
@@ -365,7 +432,16 @@ Never claim universal perfection or that no bug can ever exist.
 
 ## Progressive references
 
-Load only what the current phase requires from the bundled `references/`,
-`rubrics/`, `adapters/`, `templates/`, and `schemas/` directories. The canonical
-protocol is this file; supporting files add detail without weakening these
-invariants.
+Load only what the current phase requires:
+
+- `references/core-protocol.md` — compact shared sequence;
+- `references/quality-contract.md` and `references/metrics.md` — verdict gates;
+- `references/concurrency.md` — operator-controlled scheduling and replenishment;
+- `references/bug-hunt-protocol.md` — complete Finder-Verifier-Fixer mode;
+- `templates/owner-intake.md` — frozen campaign decisions;
+- `templates/bug-spec.md` and `templates/bug-campaign-state.md` — Bug Hunt state;
+- `schemas/` — machine-checkable Bug Hunt handoff and checkpoint contracts;
+- `adapters/` — host capability mappings.
+
+The canonical protocol is this file. Supporting files add operational detail
+without weakening these invariants.

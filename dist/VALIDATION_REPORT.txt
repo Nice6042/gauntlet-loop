@@ -1,0 +1,6 @@
+Gauntlet Loop validation report
+Version: 1.1.0
+Result: PASS
+Packaged files: 12
+Warnings: 0
+Errors: 0

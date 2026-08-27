@@ -1,0 +1,48 @@
+name: Validate Gauntlet Loop
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: validate-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  validate:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - name: Check out source
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+
+      - name: Validate and package
+        run: python scripts/run_all.py
+
+      - name: Run focused validator tests
+        run: python -m unittest discover -s tests -v
+
+      - name: Verify generated release artifacts are current
+        run: git diff --exit-code -- dist
+
+      - name: Upload validated package
+        uses: actions/upload-artifact@v4
+        with:
+          name: gauntlet-loop-${{ github.sha }}
+          path: |
+            dist/gauntlet-loop.skill
+            dist/SHA256SUMS
+            dist/security-scan.json
+            dist/VALIDATION_REPORT.txt
+            dist/RELEASE_STATUS.json
+          if-no-files-found: error

@@ -22,8 +22,15 @@ claude plugin install gauntlet-loop@gauntlet-loop
 
 ## Manual
 
-Copy `skills/gauntlet-loop/` into the skills directory supported by your host. Preserve the complete directory, including references, rubrics, templates, schemas, scripts, and adapters.
+Copy `skills/gauntlet-loop/` into the skills directory supported by your host.
+Preserve the complete directory: `SKILL.md`, `references/`, `templates/`,
+`schemas/`, and `adapters/`.
 
 ## Verify
 
-Confirm that the installed skill is named `gauntlet-loop` and that `SKILL.md` is present. Activation is explicit only: `Use Gauntlet Loop on this task.`
+Confirm that the installed skill contains `SKILL.md`,
+`references/bug-hunt-protocol.md`, `references/concurrency.md`,
+`templates/bug-spec.md`, `templates/bug-campaign-state.md`, and both schemas.
+The installed skill name remains `gauntlet-loop`. Activation is explicit only:
+`Use Gauntlet Loop on this delivery task.` or
+`Use Gauntlet Loop in Bug Hunt mode on this repository.`

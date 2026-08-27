@@ -1,0 +1,45 @@
+{
+  "schemaVersion": "1.0",
+  "cases": [
+    {
+      "id": "activate-delivery",
+      "prompt": "Use Gauntlet Loop on this delivery task.",
+      "expected": {"activate": true, "mode": "delivery-improvement"}
+    },
+    {
+      "id": "activate-bug-hunt",
+      "prompt": "Use Gauntlet Loop in Bug Hunt mode on this repository.",
+      "expected": {"activate": true, "mode": "bug-hunt"}
+    },
+    {
+      "id": "activate-finder-loop",
+      "prompt": "Start a Finder-Verifier-Fixer campaign to find bugs.",
+      "expected": {"activate": true, "mode": "bug-hunt"}
+    },
+    {
+      "id": "reject-ordinary-bug-fix",
+      "prompt": "Fix this authentication bug.",
+      "expected": {"activate": false, "mode": "none"}
+    },
+    {
+      "id": "reject-question",
+      "prompt": "What is Gauntlet Loop?",
+      "expected": {"activate": false, "mode": "none"}
+    },
+    {
+      "id": "reject-quoted-example",
+      "prompt": "The docs say: \"Use Gauntlet Loop on this task.\" What does it mean?",
+      "expected": {"activate": false, "mode": "none"}
+    },
+    {
+      "id": "reject-negation",
+      "prompt": "Do not use Gauntlet Loop; just explain the error.",
+      "expected": {"activate": false, "mode": "none"}
+    },
+    {
+      "id": "reject-generic-quality",
+      "prompt": "Make this implementation as high quality as possible.",
+      "expected": {"activate": false, "mode": "none"}
+    }
+  ]
+}

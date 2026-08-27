@@ -1,11 +1,11 @@
 {
   "$schema": "https://agent-plugins.org/schemas/1.0.0/plugin.schema.json",
   "name": "gauntlet-loop",
-  "version": "1.0.0",
-  "description": "Explicitly invoked, portable Builder-Critic quality campaigns with dependency-safe parallel work, independent integration review, resumable evidence, and owner-selected completion gates.",
+  "version": "1.1.0",
+  "description": "Explicitly invoked delivery, improvement, and Bug Hunt campaigns with independent adversarial review, operator-controlled concurrency, isolated repair, and resumable evidence.",
   "author": {"name": "Ayush Lochab", "url": "https://github.com/Nice6042"},
   "homepage": "https://github.com/Nice6042/gauntlet-loop",
   "repository": "https://github.com/Nice6042/gauntlet-loop",
   "license": "Apache-2.0",
-  "keywords": ["agent-skills", "agent-plugin", "multi-agent", "builder-critic", "orchestration", "quality-assurance"]
+  "keywords": ["agent-skills", "agent-plugin", "multi-agent", "builder-critic", "bug-hunt", "finder-verifier-fixer", "continuous-concurrency", "quality-assurance"]
 }

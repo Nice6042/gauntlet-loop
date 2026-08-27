@@ -1,0 +1,168 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/Nice6042/gauntlet-loop/schemas/bug-campaign.schema.json",
+  "title": "Gauntlet Loop Bug Hunt Campaign State",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schemaVersion",
+    "campaignId",
+    "mode",
+    "repository",
+    "baseCommit",
+    "scope",
+    "completionContract",
+    "resourcePolicy",
+    "concurrency",
+    "roleRouting",
+    "tasks",
+    "areas",
+    "candidates",
+    "integration",
+    "verdict"
+  ],
+  "properties": {
+    "schemaVersion": {"const": "1.0"},
+    "campaignId": {"type": "string", "minLength": 1},
+    "mode": {"const": "bug-hunt"},
+    "repository": {"type": "string", "minLength": 1},
+    "baseCommit": {"type": "string", "minLength": 7},
+    "scope": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["included", "excluded", "targetEnvironments"],
+      "properties": {
+        "included": {"type": "array", "minItems": 1, "items": {"type": "string"}},
+        "excluded": {"type": "array", "items": {"type": "string"}},
+        "targetEnvironments": {"type": "array", "minItems": 1, "items": {"type": "string"}}
+      }
+    },
+    "completionContract": {"type": "string", "minLength": 1},
+    "resourcePolicy": {"type": "string", "minLength": 1},
+    "concurrency": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["mode", "target", "underfillEvents"],
+      "properties": {
+        "mode": {"enum": ["ADAPTIVE", "CEILING", "SUSTAINED"]},
+        "target": {"type": ["integer", "null"], "minimum": 1},
+        "underfillEvents": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["startedAt", "reason"],
+            "properties": {
+              "startedAt": {"type": "string"},
+              "endedAt": {"type": ["string", "null"]},
+              "reason": {"type": "string", "minLength": 1}
+            }
+          }
+        }
+      }
+    },
+    "roleRouting": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["requestedModel", "requestedEffort", "actualModel", "actualEffort"],
+        "properties": {
+          "requestedModel": {"type": "string"},
+          "requestedEffort": {"type": "string"},
+          "actualModel": {"type": "string"},
+          "actualEffort": {"type": "string"},
+          "notes": {"type": "string"}
+        }
+      }
+    },
+    "tasks": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["taskId", "attempt", "areaId", "role", "workspace", "model", "effort", "state", "dependencies"],
+        "properties": {
+          "taskId": {"type": "string", "minLength": 1},
+          "attempt": {"type": "integer", "minimum": 1},
+          "areaId": {"type": ["string", "null"]},
+          "role": {"type": "string", "minLength": 1},
+          "workspace": {"type": ["string", "null"]},
+          "model": {"type": "string", "minLength": 1},
+          "effort": {"type": "string", "minLength": 1},
+          "state": {"enum": ["QUEUED", "RUNNABLE", "RUNNING", "SUCCEEDED", "FAILED", "BLOCKED", "AWAITING_APPROVAL", "CANCELLED"]},
+          "dependencies": {"type": "array", "items": {"type": "string"}, "uniqueItems": true},
+          "startedAt": {"type": ["string", "null"]},
+          "finishedAt": {"type": ["string", "null"]},
+          "blocker": {"type": ["string", "null"]},
+          "errorClass": {"enum": ["transient_transport", "rate_limit", "timeout", "semantic_failure", "programming_error", "side_effect_state_unknown", null]},
+          "approvalRequestId": {"type": ["string", "null"]}
+        }
+      }
+    },
+    "areas": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["areaId", "scope", "workspace", "baseCommit", "state"],
+        "properties": {
+          "areaId": {"type": "string", "minLength": 1},
+          "scope": {"type": "string", "minLength": 1},
+          "workspace": {"type": "string", "minLength": 1},
+          "baseCommit": {"type": "string", "minLength": 7},
+          "state": {
+            "enum": [
+              "PLANNED",
+              "DISCOVERY_ACTIVE",
+              "SPEC_REVIEW_ACTIVE",
+              "FIX_ACTIVE",
+              "FIX_REVIEW_ACTIVE",
+              "AREA_APPROVED",
+              "AREA_APPROVED_WITH_UNRESOLVED_SPECS",
+              "AREA_FIX_REVIEW_NOT_CLOSED",
+              "AREA_BLOCKED",
+              "AREA_NO_VERIFIED_BUGS"
+            ]
+          }
+        }
+      }
+    },
+    "candidates": {
+      "type": "array",
+      "items": {"$ref": "bug-spec.schema.json"}
+    },
+    "integration": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["approvedAreaCommits", "unresolvedItems", "testerEvidence", "verifierEvidence"],
+      "properties": {
+        "approvedAreaCommits": {"type": "array", "items": {"type": "string"}},
+        "unresolvedItems": {"type": "array", "items": {"type": "string"}},
+        "integrationCommit": {"type": ["string", "null"]},
+        "testerEvidence": {"type": "array", "items": {"type": "string"}},
+        "verifierEvidence": {"type": "array", "items": {"type": "string"}},
+        "mergeCommit": {"type": ["string", "null"]},
+        "mainAgentEvidence": {"type": "array", "items": {"type": "string"}}
+      }
+    },
+    "verdict": {
+      "enum": [
+        "ACTIVE",
+        "COMPLETE_WITH_VERIFIED_FIXES",
+        "CLEAN_EXHAUSTED",
+        "APPROVED_WITH_DISCLOSED_UNRESOLVED_ITEMS",
+        "PARTIAL_COVERAGE",
+        "INCONCLUSIVE",
+        "FAILED",
+        "SPEC_REVIEW_LIMIT_REACHED",
+        "FIX_REVIEW_NOT_CLOSED",
+        "BUDGET_EXHAUSTED_NOT_WOWED",
+        "ITERATION_LIMIT_REACHED_NOT_WOWED",
+        "BLOCKED_BY_CAPABILITY",
+        "BLOCKED_BY_PERMISSION",
+        "BLOCKED_BY_DEPENDENCY"
+      ]
+    }
+  }
+}

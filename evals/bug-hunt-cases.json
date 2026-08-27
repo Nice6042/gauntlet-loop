@@ -1,0 +1,58 @@
+{
+  "schemaVersion": "1.0",
+  "cases": [
+    {
+      "id": "batch-after-spec-closure",
+      "scenario": "A Finder submits nine specifications; eight are approved and one requires revision, then is approved on decision two.",
+      "expected": [
+        "Only the disputed specification returns to the Finder.",
+        "All nine approved specifications are handed to one area Fixer as a batch after the candidate ledger reaches terminal specification states."
+      ]
+    },
+    {
+      "id": "spec-review-limit",
+      "scenario": "One of nine specifications is still unapproved after its third Spec Verifier decision.",
+      "expected": [
+        "The unresolved specification becomes SPEC_REVIEW_LIMIT_REACHED.",
+        "The other eight approved specifications may proceed unless they depend on the unresolved specification.",
+        "The unresolved specification remains disclosed and is not represented as fixed."
+      ]
+    },
+    {
+      "id": "fix-review-reopen",
+      "scenario": "The fresh Fix Verifier reproduces a regression after the Fixer completes an area batch.",
+      "expected": [
+        "The area is not approved.",
+        "The finding returns to the Fixer for evidence-backed repair.",
+        "The fresh Fix Verifier re-audits the complete updated area."
+      ]
+    },
+    {
+      "id": "sustained-refill",
+      "scenario": "SUSTAINED(10) has ten useful active subagents and twelve compatible runnable tasks; one subagent completes.",
+      "expected": [
+        "The completed task stops counting as active.",
+        "The Main Agent launches the next highest-priority compatible runnable task in the same orchestration turn.",
+        "Useful active concurrency returns to ten without exceeding ten."
+      ]
+    },
+    {
+      "id": "sustained-underfill",
+      "scenario": "SUSTAINED(10) has only three useful dependency-ready non-conflicting tasks.",
+      "expected": [
+        "Run all three tasks.",
+        "Record CONCURRENCY_UNDERFILLED with the ready-work reason.",
+        "Do not create placeholder agents, duplicate investigations, or conflicting writers."
+      ]
+    },
+    {
+      "id": "zero-finding-area",
+      "scenario": "A Finder completes the frozen area search frontier with no reproducible candidate.",
+      "expected": [
+        "Zero findings is accepted without a quota.",
+        "The area may become AREA_NO_VERIFIED_BUGS with its coverage evidence.",
+        "The campaign does not claim the system is universally bug-free."
+      ]
+    }
+  ]
+}

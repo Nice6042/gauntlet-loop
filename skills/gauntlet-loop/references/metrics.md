@@ -30,3 +30,7 @@ Every task classifies every metric as APPLICABLE, NOT_APPLICABLE, DEFERRED_TO_IN
 26. Integration readiness
 
 Hard gates are non-compensating. A finding that blocks closure must identify the metric, observable gap, evidence/reproduction, why it matters, a concrete correction, expected benefit/trade-offs, and a verification method.
+
+In Bug Hunt mode, map every candidate to one or more metrics. The enclosing
+area task and integration review still classify all 26; candidate-level mapping
+does not replace complete area/system coverage.

@@ -1,8 +1,20 @@
 # Gauntlet Loop
 
-Portable, explicitly invoked Builder–Critic multi-agent quality campaigns.
+Portable, explicitly invoked multi-agent delivery, improvement, and Bug Hunt
+campaigns.
 
-Gauntlet Loop decomposes a goal into dependency-safe Loop Tasks, runs Builder–Critic repair cycles to a user-selected completion standard, integrates completed work through Combiner–Integration-Critic loops, and repeats in waves until the whole deliverable meets its frozen quality contract.
+Gauntlet Loop provides two modes:
+
+- **Delivery/Improvement:** dependency-safe Builder–Critic loops for projects,
+  features, and targeted improvements.
+- **Bug Hunt:** isolated Finder–Spec-Verifier–Fixer–Fix-Verifier area loops,
+  followed by combined testing, adversarial integration review, merge, and Main
+  Agent verification.
+
+Both modes use frozen completion gates, role separation, reproducible evidence,
+resumable state, per-role/task model and effort routing, and operator-selected
+`ADAPTIVE`, `CEILING(N)`, or continuously replenished `SUSTAINED(N)`
+concurrency.
 
 ## Install
 
@@ -28,15 +40,26 @@ claude plugin install gauntlet-loop@gauntlet-loop
 
 ## Activate
 
-Gauntlet Loop never activates implicitly. Ask explicitly:
+Gauntlet Loop never activates implicitly. Ask explicitly and select the mode:
 
 ```text
-Use Gauntlet Loop on this task.
+Use Gauntlet Loop on this delivery task.
+Use Gauntlet Loop in Bug Hunt mode on this repository.
 ```
 
-The owner then chooses the specification, comparison references, models/effort, concurrency, resource policy, and completion standard: Absolute Wowed, Strict Wowed, User-Defined, or Main-Agent Recommended.
+The owner approves scope, exclusions, completion standard, comparisons,
+models/effort, concurrency, isolation, resources, evidence, and permissions
+before execution. A generic request to fix a bug does not activate the skill.
 
-See `skills/gauntlet-loop/SKILL.md` for the canonical protocol and `docs/` for architecture, installation, integration, security, and usage documentation.
+See `skills/gauntlet-loop/SKILL.md` for the canonical protocol,
+`skills/gauntlet-loop/references/` for progressively loaded operating detail,
+and `docs/installation.md` for installation.
+
+## Research
+
+The evidence and decisions behind version 1.1.0 are in
+`docs/agent-skills-10k-research.md`, including the deduplicated repository
+inventory and adopted/rejected patterns.
 
 ## License
 

@@ -1,7 +1,7 @@
 {
   "name": "gauntlet-loop",
-  "version": "1.0.0",
-  "description": "Explicitly invoked Builder-Critic multi-agent quality campaigns",
+  "version": "1.1.0",
+  "description": "Explicitly invoked delivery, improvement, and Bug Hunt campaigns",
   "author": {"name": "Ayush Lochab"},
   "license": "Apache-2.0",
   "skills": ["./skills/gauntlet-loop"]

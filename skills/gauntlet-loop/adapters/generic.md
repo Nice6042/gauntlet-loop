@@ -2,10 +2,16 @@
 
 Map logical roles to the strongest capabilities the host actually provides.
 
-- Main Agent: orchestration, frozen contract, task graph, escalation, global review.
-- Builder: isolated implementation context/workspace where possible.
-- Critic: separate fresh context; different model family preferred when available.
-- Combiner: integration workspace and system-level testing.
-- Integration Critic: separate integration review context.
+- Main Agent: orchestration, frozen contract, ready queue, replenishment, escalation, and global review.
+- Builder/Fixer: isolated implementation context and workspace; only one writer per workspace.
+- Critic/Spec Verifier/Fix Verifier: separate read-only context; different model family preferred where available.
+- Finder: read-only area investigation and evidence-backed specification.
+- Combiner: separate integration workspace, conflict ownership, and system checks.
+- Final Tester: fresh execution of the actual combined system and original reproductions.
+- Integration Critic/Verifier: separate adversarial integration-review context.
 
-If parallel agents are unavailable, execute ready Loop Tasks sequentially while preserving role separation. If model routing is unavailable, use fresh isolated contexts. If evidence tools are unavailable, cap the verdict honestly. Never claim capabilities the host does not expose.
+Map every requested role, model, and effort independently. Record substitutions.
+
+If parallel agents are unavailable, execute ready tasks sequentially while preserving role separation. If model routing is unavailable, use fresh isolated contexts. If worktrees are unavailable, use the safest equivalent isolation and retain a single writer. If evidence tools are unavailable, cap the verdict honestly.
+
+For `SUSTAINED(N)`, replenish finished slots while useful compatible work is ready. Host limits and dependency barriers create recorded `CONCURRENCY_UNDERFILLED` states; they do not justify placeholder tasks or false compliance. Never claim capabilities the host does not expose.
