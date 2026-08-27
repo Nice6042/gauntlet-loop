@@ -1,0 +1,8 @@
+{
+  "name": "gauntlet-loop",
+  "version": "1.0.0",
+  "description": "Explicitly invoked Builder-Critic multi-agent quality campaigns",
+  "author": {"name": "Ayush Lochab"},
+  "license": "Apache-2.0",
+  "skills": ["./skills/gauntlet-loop"]
+}

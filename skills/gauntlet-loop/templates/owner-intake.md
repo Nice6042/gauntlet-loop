@@ -1,0 +1,22 @@
+# Owner intake
+
+- Desired final deliverable:
+- Starting artifacts/repository:
+- Target platforms/environments:
+- Must-have requirements:
+- Prohibited behavior/non-goals:
+- Comparison references and comparison dimensions:
+- Completion standard: Absolute Wowed / Strict Wowed / User-Defined / Main-Agent Recommended
+- Resource policy: quality-first / budget-capped / iteration-capped / adaptive
+- Main Agent model/effort:
+- Builder default model/effort:
+- Critic default model/effort:
+- Fresh Critic model/effort:
+- Combiner model/effort:
+- Integration Critic model/effort:
+- Final review model/effort:
+- Maximum useful concurrency:
+- Cost/usage constraints:
+- Permission boundaries:
+- Required evidence/tests:
+- Additional constraints:
