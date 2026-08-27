@@ -1,0 +1,601 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/Nice6042/gauntlet-loop/schemas/delivery-task.schema.json",
+  "title": "Gauntlet Loop Delivery Task",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schemaVersion",
+    "campaignId",
+    "taskId",
+    "attempt",
+    "artifactId",
+    "campaignKind",
+    "repository",
+    "baseCommit",
+    "workspace",
+    "roleRouting",
+    "closurePolicy",
+    "improvementMeasurementPolicy",
+    "improvementClaims",
+    "objective",
+    "scope",
+    "dependencies",
+    "interfaces",
+    "requirements",
+    "baseline",
+    "comparisons",
+    "metrics",
+    "evidence",
+    "findings",
+    "verdict"
+  ],
+  "properties": {
+    "schemaVersion": {"const": "1.0"},
+    "campaignId": {"type": "string", "minLength": 1},
+    "taskId": {"type": "string", "minLength": 1},
+    "attempt": {"type": "integer", "minimum": 1},
+    "artifactId": {"type": "string", "minLength": 1},
+    "campaignKind": {"enum": ["new_project", "feature_addition", "improvement"]},
+    "repository": {"type": "string", "minLength": 1},
+    "baseCommit": {"type": "string", "minLength": 7},
+    "workspace": {"type": "string", "minLength": 1},
+    "objective": {"type": "string", "minLength": 1},
+    "roleRouting": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["builder", "critic", "freshClosureCritic", "independentComparator"],
+      "properties": {
+        "builder": {"$ref": "#/$defs/role"},
+        "critic": {"$ref": "#/$defs/role"},
+        "freshClosureCritic": {"anyOf": [{"$ref": "#/$defs/role"}, {"type": "null"}]},
+        "independentComparator": {"anyOf": [{"$ref": "#/$defs/role"}, {"type": "null"}]}
+      }
+    },
+    "closurePolicy": {"enum": ["PERSISTENT_CRITIC_SUFFICIENT", "FRESH_CLOSURE_REQUIRED"]},
+    "improvementMeasurementPolicy": {"enum": ["NOT_APPLICABLE", "TASK_LEVEL", "DEFERRED_TO_INTEGRATION"]},
+    "improvementClaims": {
+      "type": "array",
+      "items": {"$ref": "#/$defs/improvementClaim"}
+    },
+    "scope": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["owned", "nonGoals", "unchangedBehavior", "permissions"],
+      "properties": {
+        "owned": {"type": "array", "minItems": 1, "items": {"type": "string"}, "uniqueItems": true},
+        "nonGoals": {"type": "array", "items": {"type": "string"}, "uniqueItems": true},
+        "unchangedBehavior": {"type": "array", "items": {"type": "string"}, "uniqueItems": true},
+        "permissions": {"type": "array", "items": {"type": "string"}, "uniqueItems": true}
+      }
+    },
+    "dependencies": {"type": "array", "items": {"type": "string"}, "uniqueItems": true},
+    "interfaces": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["name", "direction", "contract", "owner"],
+        "properties": {
+          "name": {"type": "string", "minLength": 1},
+          "direction": {"enum": ["input", "output", "shared"]},
+          "contract": {"type": "string", "minLength": 1},
+          "owner": {"type": "string", "minLength": 1}
+        }
+      }
+    },
+    "requirements": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["id", "text", "expected", "surface", "status", "evidenceIds"],
+        "properties": {
+          "id": {"type": "string", "minLength": 1},
+          "text": {"type": "string", "minLength": 1},
+          "expected": {"type": "string", "minLength": 1},
+          "surface": {"type": "string", "minLength": 1},
+          "status": {"enum": ["PLANNED", "SATISFIED", "VIOLATED", "PARTIAL", "NOT_ASSESSABLE"]},
+          "evidenceIds": {"type": "array", "minItems": 1, "items": {"type": "string"}, "uniqueItems": true}
+        },
+        "allOf": [
+          {
+            "if": {"properties": {"status": {"const": "SATISFIED"}}},
+            "then": {"properties": {"evidenceIds": {"minItems": 1}}}
+          }
+        ]
+      }
+    },
+    "baseline": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["kind", "method", "artifact", "observation"],
+      "properties": {
+        "kind": {"enum": ["desired_state", "existing_artifact", "measurement"]},
+        "method": {"type": "string", "minLength": 1},
+        "artifact": {"type": ["string", "null"]},
+        "observation": {"type": "string", "minLength": 1}
+      }
+    },
+    "comparisons": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["claimId", "dimension", "reference", "candidate", "sameMethod", "parityReceipt", "comparatorReportArtifactId", "comparatorReportSha256", "comparatorSealedVerdict", "labelMappingArtifactId", "verdict", "evidence"],
+        "properties": {
+          "claimId": {"type": "string", "minLength": 1},
+          "dimension": {"type": "string", "minLength": 1},
+          "reference": {"type": "string", "minLength": 1},
+          "candidate": {"type": "string", "minLength": 1},
+          "sameMethod": {"type": "boolean"},
+          "parityReceipt": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["baselineArtifactId", "candidateArtifactId", "environment", "workloadData", "configFlags", "warmupCacheState", "repetitions", "seed", "baselineObservation", "candidateObservation", "matched"],
+            "properties": {
+              "baselineArtifactId": {"type": "string", "minLength": 1},
+              "candidateArtifactId": {"type": "string", "minLength": 1},
+              "environment": {"type": "string", "minLength": 1},
+              "workloadData": {"type": "string", "minLength": 1},
+              "configFlags": {"type": "string", "minLength": 1},
+              "warmupCacheState": {"type": "string", "minLength": 1},
+              "repetitions": {"type": "integer", "minimum": 1},
+              "seed": {"type": ["string", "null"]},
+              "baselineObservation": {"type": "string", "minLength": 1},
+              "candidateObservation": {"type": "string", "minLength": 1},
+              "matched": {"type": "boolean"}
+            }
+          },
+          "comparatorReportArtifactId": {"type": ["string", "null"]},
+          "comparatorReportSha256": {"type": ["string", "null"], "pattern": "^[a-f0-9]{64}$"},
+          "comparatorSealedVerdict": {"enum": ["COMPARISON_COMPLETE", "COMPARISON_INCONCLUSIVE", "BLOCKED"]},
+          "labelMappingArtifactId": {"type": ["string", "null"]},
+          "verdict": {"enum": ["BETTER", "EQUAL", "WORSE", "TRADEOFF", "INCONCLUSIVE"]},
+          "evidence": {"type": "array", "minItems": 1, "items": {"type": "string", "minLength": 1}}
+        },
+        "allOf": [
+          {
+            "if": {
+              "anyOf": [
+                {"properties": {"sameMethod": {"const": false}}},
+                {"properties": {"parityReceipt": {"properties": {"matched": {"const": false}}}}},
+                {"properties": {"comparatorSealedVerdict": {"enum": ["COMPARISON_INCONCLUSIVE", "BLOCKED"]}}}
+              ]
+            },
+            "then": {"properties": {"verdict": {"const": "INCONCLUSIVE"}}}
+          },
+          {
+            "if": {"properties": {"verdict": {"enum": ["BETTER", "EQUAL", "WORSE", "TRADEOFF"]}}},
+            "then": {
+              "properties": {
+                "sameMethod": {"const": true},
+                "parityReceipt": {"properties": {"matched": {"const": true}}},
+                "comparatorReportArtifactId": {"type": "string", "minLength": 1},
+                "comparatorReportSha256": {"type": "string", "pattern": "^[a-f0-9]{64}$"},
+                "comparatorSealedVerdict": {"const": "COMPARISON_COMPLETE"},
+                "labelMappingArtifactId": {"type": "string", "minLength": 1}
+              }
+            }
+          }
+        ]
+      }
+    },
+    "metrics": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["classification", "justification", "status", "evidence", "tradeoff", "findingIds"],
+        "properties": {
+          "classification": {"enum": ["APPLICABLE", "NOT_APPLICABLE", "DEFERRED_TO_INTEGRATION", "DEFERRED_TO_LATER_WAVE", "OWNER_EXCLUDED"]},
+          "justification": {"type": "string", "minLength": 1},
+          "status": {"enum": ["PENDING", "FAIL", "MATERIAL_GAPS", "MINOR_GAPS", "NO_IDENTIFIED_GAPS", "NO_IDENTIFIED_ROOM_FOR_IMPROVEMENT", "NOT_EVALUATED_WITH_REASON"]},
+          "evidence": {"type": "array", "items": {"type": "string"}},
+          "tradeoff": {"type": "string"},
+          "findingIds": {"type": "array", "items": {"type": "string"}, "uniqueItems": true}
+        },
+        "allOf": [
+          {
+            "if": {"properties": {"classification": {"const": "APPLICABLE"}}},
+            "then": {
+              "properties": {
+                "status": {"enum": ["PENDING", "FAIL", "MATERIAL_GAPS", "MINOR_GAPS", "NO_IDENTIFIED_GAPS", "NO_IDENTIFIED_ROOM_FOR_IMPROVEMENT"]},
+                "evidence": {"minItems": 1}
+              }
+            }
+          },
+          {
+            "if": {"properties": {"classification": {"enum": ["NOT_APPLICABLE", "DEFERRED_TO_INTEGRATION", "DEFERRED_TO_LATER_WAVE", "OWNER_EXCLUDED"]}}},
+            "then": {"properties": {"status": {"const": "NOT_EVALUATED_WITH_REASON"}}}
+          }
+        ]
+      },
+      "required": [
+        "requirements_fidelity",
+        "functional_correctness",
+        "hidden_edge_cases",
+        "regression_risk",
+        "code_quality",
+        "architecture",
+        "maintainability",
+        "extensibility",
+        "scalability",
+        "performance",
+        "security",
+        "privacy",
+        "error_handling",
+        "reliability",
+        "test_quality_and_coverage",
+        "visual_quality",
+        "ux_consistency",
+        "accessibility",
+        "asset_quality",
+        "originality_and_licensing",
+        "platform_compatibility",
+        "deployment_readiness",
+        "documentation",
+        "comparison_against_supplied_references",
+        "future_proofness",
+        "integration_readiness"
+      ]
+    },
+    "evidence": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["evidenceId", "kind", "scenario", "surface", "environment", "expected", "observed", "status", "artifactId", "location"],
+        "properties": {
+          "evidenceId": {"type": "string", "minLength": 1},
+          "kind": {"enum": ["direct", "boundary_observation", "static_causal_trace", "correlational", "testimonial", "absence"]},
+          "scenario": {"type": "string", "minLength": 1},
+          "surface": {"type": "string", "minLength": 1},
+          "environment": {"type": "string", "minLength": 1},
+          "expected": {"type": "string", "minLength": 1},
+          "observed": {"type": "string", "minLength": 1},
+          "status": {"enum": ["PASS", "FAIL", "INCONCLUSIVE", "BLOCKED", "SKIPPED_WITH_REASON"]},
+          "artifactId": {"type": "string", "minLength": 1},
+          "location": {"type": "string", "minLength": 1}
+        }
+      }
+    },
+    "findings": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["findingId", "riskId", "scope", "kind", "status", "severity", "pass", "metric", "requirementIds", "consequence", "evidence", "owner", "correction", "tradeoff", "reason", "recheckMethod", "closureProof", "riskAcceptanceReceipt"],
+        "properties": {
+          "findingId": {"type": "string", "minLength": 1},
+          "riskId": {"type": ["string", "null"]},
+          "scope": {"type": "string", "minLength": 1},
+          "kind": {"enum": ["GAP", "QUESTION", "INCONCLUSIVE", "BLOCKER", "MISSING_EVIDENCE", "OBSERVATION"]},
+          "status": {"enum": ["OPEN", "DISMISSED_WITH_REASON", "BLOCKED_BY_MISSING_EVIDENCE", "ACCEPTED_RISK_BY_OWNER", "VERIFIED_FIXED", "VERIFIED_BLOCKED", "FALSE_POSITIVE_WITH_PROOF", "OUT_OF_SCOPE_ESCALATED"]},
+          "severity": {"enum": ["critical", "high", "medium", "low"]},
+          "pass": {"enum": ["contract_compliance", "observable_correctness", "quality_integration", "baseline_comparison"]},
+          "metric": {"type": "string", "minLength": 1},
+          "requirementIds": {"type": "array", "items": {"type": "string"}, "uniqueItems": true},
+          "consequence": {"type": "string", "minLength": 1},
+          "evidence": {"type": "array", "minItems": 1, "items": {"type": "string"}},
+          "owner": {"type": "string", "minLength": 1},
+          "correction": {"type": "string", "minLength": 1},
+          "tradeoff": {"type": "string"},
+          "reason": {"type": "string", "minLength": 1},
+          "recheckMethod": {"type": "string", "minLength": 1},
+          "closureProof": {"type": ["string", "null"]},
+          "riskAcceptanceReceipt": {"type": ["string", "null"]}
+        },
+        "allOf": [
+          {
+            "if": {"properties": {"status": {"enum": ["DISMISSED_WITH_REASON", "ACCEPTED_RISK_BY_OWNER", "VERIFIED_FIXED", "FALSE_POSITIVE_WITH_PROOF", "OUT_OF_SCOPE_ESCALATED"]}}},
+            "then": {"properties": {"closureProof": {"type": "string", "minLength": 1}}}
+          },
+          {
+            "if": {"properties": {"status": {"const": "ACCEPTED_RISK_BY_OWNER"}}},
+            "then": {
+              "properties": {
+                "riskId": {"type": "string", "minLength": 1},
+                "riskAcceptanceReceipt": {"type": "string", "minLength": 1}
+              }
+            }
+          }
+        ]
+      }
+    },
+    "builderReport": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["status", "reportArtifactId", "reviewedHead", "changedArtifacts", "capabilities", "unavailableEvidence", "concerns"],
+      "properties": {
+        "status": {"enum": ["DONE_PENDING_REVIEW", "DONE_WITH_CONCERNS", "NEEDS_CONTEXT", "SPEC_CONFLICT", "BLOCKED"]},
+        "reportArtifactId": {"type": "string", "minLength": 1},
+        "reviewedHead": {"type": "string", "minLength": 7},
+        "changedArtifacts": {"type": "array", "items": {"type": "string"}, "uniqueItems": true},
+        "capabilities": {"type": "array", "items": {"type": "string"}, "uniqueItems": true},
+        "unavailableEvidence": {"type": "array", "items": {"type": "string"}, "uniqueItems": true},
+        "concerns": {"type": "array", "items": {"type": "string"}, "uniqueItems": true}
+      }
+    },
+    "reviews": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["reviewKind", "reviewer", "model", "effort", "reviewedArtifactId", "reviewReportArtifactId", "reviewReportSha256", "passes", "verdict", "findingIds"],
+        "properties": {
+          "reviewKind": {"enum": ["TASK", "REPAIR_REVIEW", "FRESH_CLOSURE"]},
+          "reviewer": {"type": "string", "minLength": 1},
+          "model": {"type": "string", "minLength": 1},
+          "effort": {"type": "string", "minLength": 1},
+          "reviewedArtifactId": {"type": "string", "minLength": 1},
+          "reviewReportArtifactId": {"type": "string", "minLength": 1},
+          "reviewReportSha256": {"type": ["string", "null"], "pattern": "^[a-f0-9]{64}$"},
+          "passes": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["contractCompliance", "observableCorrectness", "qualityIntegration", "baselineComparison"],
+            "properties": {
+              "contractCompliance": {"$ref": "#/$defs/passReview"},
+              "observableCorrectness": {"$ref": "#/$defs/passReview"},
+              "qualityIntegration": {"$ref": "#/$defs/passReview"},
+              "baselineComparison": {"$ref": "#/$defs/passReview"}
+            }
+          },
+          "verdict": {"enum": ["TASK_APPROVED", "TASK_APPROVED_WITH_ACCEPTED_RISKS", "TASK_REVISION_REQUIRED", "TASK_INCONCLUSIVE", "TASK_BLOCKED"]},
+          "findingIds": {"type": "array", "items": {"type": "string"}, "uniqueItems": true}
+        },
+        "allOf": [
+          {
+            "if": {"properties": {"verdict": {"const": "TASK_APPROVED"}}},
+            "then": {
+              "properties": {
+                "passes": {
+                  "properties": {
+                    "contractCompliance": {"properties": {"status": {"const": "PASS"}}},
+                    "observableCorrectness": {"properties": {"status": {"const": "PASS"}}},
+                    "qualityIntegration": {"properties": {"status": {"const": "PASS"}}},
+                    "baselineComparison": {"properties": {"status": {"enum": ["PASS", "NOT_APPLICABLE_WITH_REASON"]}}}
+                  }
+                }
+              }
+            }
+          },
+          {
+            "if": {"properties": {"verdict": {"const": "TASK_APPROVED_WITH_ACCEPTED_RISKS"}}},
+            "then": {
+              "properties": {
+                "passes": {
+                  "properties": {
+                    "contractCompliance": {"properties": {"status": {"enum": ["PASS", "PASS_WITH_ACCEPTED_RISKS"]}}},
+                    "observableCorrectness": {"properties": {"status": {"enum": ["PASS", "PASS_WITH_ACCEPTED_RISKS"]}}},
+                    "qualityIntegration": {"properties": {"status": {"enum": ["PASS", "PASS_WITH_ACCEPTED_RISKS"]}}},
+                    "baselineComparison": {"properties": {"status": {"enum": ["PASS", "PASS_WITH_ACCEPTED_RISKS", "NOT_APPLICABLE_WITH_REASON"]}}}
+                  }
+                }
+              }
+            }
+          }
+        ]
+      }
+    },
+    "closureReceipt": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["receiptArtifactId", "receiptSha256", "approvedArtifactId", "approvedHead", "approvedArtifactSha256", "lastMutationEventId", "persistentReviewArtifactId", "freshClosureReviewArtifactId", "receiptVerdict"],
+      "properties": {
+        "receiptArtifactId": {"type": "string", "minLength": 1},
+        "receiptSha256": {"type": "string", "pattern": "^[a-f0-9]{64}$"},
+        "approvedArtifactId": {"type": "string", "minLength": 1},
+        "approvedHead": {"type": "string", "minLength": 7},
+        "approvedArtifactSha256": {"type": ["string", "null"], "pattern": "^[a-f0-9]{64}$"},
+        "lastMutationEventId": {"type": "string", "minLength": 1},
+        "persistentReviewArtifactId": {"type": "string", "minLength": 1},
+        "freshClosureReviewArtifactId": {"type": ["string", "null"]},
+        "receiptVerdict": {"enum": ["TASK_APPROVED", "TASK_APPROVED_WITH_ACCEPTED_RISKS"]}
+      }
+    },
+    "verdict": {"enum": ["PLANNED", "BUILDING", "DONE_PENDING_REVIEW", "DONE_WITH_CONCERNS", "NEEDS_CONTEXT", "SPEC_CONFLICT", "BLOCKED", "TASK_APPROVED", "TASK_APPROVED_WITH_ACCEPTED_RISKS", "TASK_REVISION_REQUIRED", "TASK_INCONCLUSIVE", "TASK_BLOCKED"]}
+  },
+  "allOf": [
+    {
+      "if": {"properties": {"improvementMeasurementPolicy": {"const": "TASK_LEVEL"}, "verdict": {"enum": ["TASK_APPROVED", "TASK_APPROVED_WITH_ACCEPTED_RISKS"]}}},
+      "then": {
+        "properties": {
+          "improvementClaims": {
+            "minItems": 1,
+            "not": {"contains": {"properties": {"state": {"enum": ["PLANNED", "DEFERRED", "SYSTEM_VERIFIED", "FAILED", "INCONCLUSIVE"]}}}}
+          },
+          "comparisons": {
+            "minItems": 1,
+            "not": {"contains": {"properties": {"verdict": {"enum": ["EQUAL", "WORSE", "TRADEOFF", "INCONCLUSIVE"]}}}}
+          }
+        }
+      }
+    },
+    {
+      "if": {"properties": {"improvementMeasurementPolicy": {"const": "DEFERRED_TO_INTEGRATION"}, "verdict": {"enum": ["TASK_APPROVED", "TASK_APPROVED_WITH_ACCEPTED_RISKS"]}}},
+      "then": {
+        "properties": {
+          "improvementClaims": {
+            "minItems": 1,
+            "not": {"contains": {"properties": {"state": {"enum": ["PLANNED", "TASK_VERIFIED", "SYSTEM_VERIFIED", "FAILED", "INCONCLUSIVE"]}}}}
+          }
+        }
+      }
+    },
+    {
+      "if": {"properties": {"improvementMeasurementPolicy": {"const": "NOT_APPLICABLE"}}},
+      "then": {"properties": {"improvementClaims": {"maxItems": 0}}}
+    },
+    {
+      "if": {"properties": {"comparisons": {"contains": {"properties": {"verdict": {"enum": ["BETTER", "EQUAL", "WORSE", "TRADEOFF"]}}}}}},
+      "then": {"properties": {"roleRouting": {"properties": {"independentComparator": {"type": "object"}}}}}
+    },
+    {
+      "if": {"properties": {"verdict": {"const": "TASK_APPROVED"}}},
+      "then": {
+        "required": ["builderReport", "reviews", "closureReceipt"],
+        "properties": {
+          "requirements": {"not": {"contains": {"properties": {"status": {"enum": ["PLANNED", "VIOLATED", "PARTIAL", "NOT_ASSESSABLE"]}}}}},
+          "metrics": {"additionalProperties": {"properties": {"status": {"enum": ["MINOR_GAPS", "NO_IDENTIFIED_GAPS", "NO_IDENTIFIED_ROOM_FOR_IMPROVEMENT", "NOT_EVALUATED_WITH_REASON"]}}}},
+          "builderReport": {
+            "properties": {
+              "status": {"enum": ["DONE_PENDING_REVIEW", "DONE_WITH_CONCERNS"]},
+              "changedArtifacts": {"minItems": 1}
+            }
+          },
+          "evidence": {"contains": {"properties": {"status": {"const": "PASS"}}}},
+          "reviews": {"minItems": 1, "contains": {"properties": {"reviewKind": {"enum": ["TASK", "REPAIR_REVIEW"]}, "verdict": {"const": "TASK_APPROVED"}}}},
+          "closureReceipt": {"properties": {"receiptVerdict": {"const": "TASK_APPROVED"}}},
+          "findings": {"not": {"contains": {"properties": {"status": {"enum": ["OPEN", "BLOCKED_BY_MISSING_EVIDENCE", "ACCEPTED_RISK_BY_OWNER", "VERIFIED_BLOCKED"]}}}}}
+        }
+      }
+    },
+    {
+      "if": {"properties": {"verdict": {"const": "TASK_APPROVED_WITH_ACCEPTED_RISKS"}}},
+      "then": {
+        "required": ["builderReport", "reviews", "closureReceipt"],
+        "properties": {
+          "requirements": {"not": {"contains": {"properties": {"status": {"enum": ["PLANNED", "VIOLATED", "PARTIAL", "NOT_ASSESSABLE"]}}}}},
+          "metrics": {"additionalProperties": {"properties": {"status": {"enum": ["MATERIAL_GAPS", "MINOR_GAPS", "NO_IDENTIFIED_GAPS", "NO_IDENTIFIED_ROOM_FOR_IMPROVEMENT", "NOT_EVALUATED_WITH_REASON"]}}}},
+          "builderReport": {
+            "properties": {
+              "status": {"enum": ["DONE_PENDING_REVIEW", "DONE_WITH_CONCERNS"]},
+              "changedArtifacts": {"minItems": 1}
+            }
+          },
+          "evidence": {"contains": {"properties": {"status": {"const": "PASS"}}}},
+          "reviews": {"minItems": 1, "contains": {"properties": {"reviewKind": {"enum": ["TASK", "REPAIR_REVIEW"]}, "verdict": {"const": "TASK_APPROVED_WITH_ACCEPTED_RISKS"}}}},
+          "closureReceipt": {"properties": {"receiptVerdict": {"const": "TASK_APPROVED_WITH_ACCEPTED_RISKS"}}},
+          "findings": {
+            "contains": {"properties": {"status": {"const": "ACCEPTED_RISK_BY_OWNER"}}},
+            "not": {"contains": {"properties": {"status": {"enum": ["OPEN", "BLOCKED_BY_MISSING_EVIDENCE", "VERIFIED_BLOCKED"]}}}}
+          }
+        }
+      }
+    },
+    {
+      "if": {"properties": {"verdict": {"enum": ["DONE_PENDING_REVIEW", "DONE_WITH_CONCERNS"]}}},
+      "then": {"required": ["builderReport"]}
+    },
+    {
+      "if": {"properties": {"verdict": {"enum": ["TASK_REVISION_REQUIRED", "TASK_INCONCLUSIVE", "TASK_BLOCKED"]}}},
+      "then": {"required": ["builderReport", "reviews"]}
+    },
+    {
+      "if": {"properties": {"closurePolicy": {"const": "FRESH_CLOSURE_REQUIRED"}, "verdict": {"const": "TASK_APPROVED"}}},
+      "then": {
+        "required": ["closureReceipt"],
+        "properties": {
+          "roleRouting": {"properties": {"freshClosureCritic": {"type": "object"}}},
+          "reviews": {
+            "contains": {
+              "properties": {
+                "reviewKind": {"const": "FRESH_CLOSURE"},
+                "verdict": {"const": "TASK_APPROVED"}
+              }
+            }
+          },
+          "closureReceipt": {"properties": {"freshClosureReviewArtifactId": {"type": "string", "minLength": 1}}}
+        }
+      }
+    },
+    {
+      "if": {"properties": {"closurePolicy": {"const": "FRESH_CLOSURE_REQUIRED"}, "verdict": {"const": "TASK_APPROVED_WITH_ACCEPTED_RISKS"}}},
+      "then": {
+        "required": ["closureReceipt"],
+        "properties": {
+          "roleRouting": {"properties": {"freshClosureCritic": {"type": "object"}}},
+          "reviews": {
+            "contains": {
+              "properties": {
+                "reviewKind": {"const": "FRESH_CLOSURE"},
+                "verdict": {"const": "TASK_APPROVED_WITH_ACCEPTED_RISKS"}
+              }
+            }
+          },
+          "closureReceipt": {"properties": {"freshClosureReviewArtifactId": {"type": "string", "minLength": 1}}}
+        }
+      }
+    }
+  ],
+  "$defs": {
+    "role": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["identity", "requestedModel", "requestedEffort", "actualModel", "actualEffort"],
+      "properties": {
+        "identity": {"type": "string", "minLength": 1},
+        "requestedModel": {"type": "string", "minLength": 1},
+        "requestedEffort": {"type": "string", "minLength": 1},
+        "actualModel": {"type": "string", "minLength": 1},
+        "actualEffort": {"type": "string", "minLength": 1}
+      }
+    },
+    "improvementClaim": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["claimId", "dimension", "measurementPolicy", "state", "evidence", "comparisonArtifactId", "comparisonReceipt"],
+      "properties": {
+        "claimId": {"type": "string", "minLength": 1},
+        "dimension": {"type": "string", "minLength": 1},
+        "measurementPolicy": {"enum": ["TASK_LEVEL", "DEFERRED_TO_INTEGRATION"]},
+        "state": {"enum": ["PLANNED", "TASK_VERIFIED", "DEFERRED", "SYSTEM_VERIFIED", "FAILED", "INCONCLUSIVE"]},
+        "evidence": {"type": "array", "minItems": 1, "items": {"type": "string", "minLength": 1}},
+        "comparisonArtifactId": {"type": ["string", "null"]},
+        "comparisonReceipt": {"anyOf": [{"$ref": "#/$defs/comparisonResultReceipt"}, {"type": "null"}]}
+      },
+      "allOf": [
+        {
+          "if": {"properties": {"state": {"enum": ["TASK_VERIFIED", "SYSTEM_VERIFIED"]}}},
+          "then": {
+            "properties": {
+              "comparisonArtifactId": {"type": "string", "minLength": 1},
+              "comparisonReceipt": {
+                "allOf": [
+                  {"$ref": "#/$defs/comparisonResultReceipt"},
+                  {"properties": {"verdict": {"const": "BETTER"}}}
+                ]
+              }
+            }
+          }
+        }
+      ]
+    },
+    "comparisonResultReceipt": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["baselineArtifactId", "candidateArtifactId", "environment", "workloadData", "configFlags", "warmupCacheState", "repetitions", "seed", "baselineObservation", "candidateObservation", "comparatorReportArtifactId", "comparatorReportSha256", "comparatorSealedVerdict", "labelMappingArtifactId", "verdict", "evidence"],
+      "properties": {
+        "baselineArtifactId": {"type": "string", "minLength": 1},
+        "candidateArtifactId": {"type": "string", "minLength": 1},
+        "environment": {"type": "string", "minLength": 1},
+        "workloadData": {"type": "string", "minLength": 1},
+        "configFlags": {"type": "string", "minLength": 1},
+        "warmupCacheState": {"type": "string", "minLength": 1},
+        "repetitions": {"type": "integer", "minimum": 1},
+        "seed": {"type": ["string", "null"]},
+        "baselineObservation": {"type": "string", "minLength": 1},
+        "candidateObservation": {"type": "string", "minLength": 1},
+        "comparatorReportArtifactId": {"type": "string", "minLength": 1},
+        "comparatorReportSha256": {"type": "string", "pattern": "^[a-f0-9]{64}$"},
+        "comparatorSealedVerdict": {"const": "COMPARISON_COMPLETE"},
+        "labelMappingArtifactId": {"type": "string", "minLength": 1},
+        "verdict": {"enum": ["BETTER", "EQUAL", "WORSE", "TRADEOFF"]},
+        "evidence": {"type": "array", "minItems": 1, "items": {"type": "string", "minLength": 1}}
+      }
+    },
+    "passReview": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["status", "evidence"],
+      "properties": {
+        "status": {"enum": ["PASS", "PASS_WITH_ACCEPTED_RISKS", "FAIL", "INCONCLUSIVE", "BLOCKED", "NOT_APPLICABLE_WITH_REASON"]},
+        "evidence": {"type": "array", "minItems": 1, "items": {"type": "string"}}
+      }
+    }
+  }
+}

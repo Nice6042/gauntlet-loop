@@ -1,0 +1,125 @@
+{
+  "schemaVersion": "1.0",
+  "cases": [
+    {
+      "id": "builder-missing-contract-context",
+      "roleTemplate": "templates/builder-prompt.md",
+      "scenario": "The task depends on an upstream interface, but its artifact and exact contract are missing from the sealed brief.",
+      "expected": [
+        "Return NEEDS_CONTEXT before editing.",
+        "Name the missing upstream artifact or contract.",
+        "Do not invent an interface or product decision."
+      ]
+    },
+    {
+      "id": "builder-preserves-feature-boundary",
+      "roleTemplate": "templates/builder-prompt.md",
+      "scenario": "A feature task adds one observable API behavior while all existing callers and unrelated responses are frozen unchanged.",
+      "expected": [
+        "Map the new acceptance IDs to exact implementation and evidence.",
+        "Preserve and verify the unchanged-behavior boundary.",
+        "Report affected caller migration and real API-surface evidence."
+      ]
+    },
+    {
+      "id": "improvement-method-drift",
+      "roleTemplate": "templates/critic-prompt.md",
+      "scenario": "The Builder claims a performance improvement but measured the baseline with cold cache and the candidate with warm cache.",
+      "expected": [
+        "Reject the unsupported improvement claim.",
+        "Mark the comparison as not same-method and inconclusive or revision required.",
+        "Require comparable before/after evidence without ignoring other hard gates."
+      ]
+    },
+    {
+      "id": "critic-test-surface-misalignment",
+      "roleTemplate": "templates/critic-prompt.md",
+      "scenario": "All tests pass, but none invoke the new public API path named by the acceptance criterion.",
+      "expected": [
+        "Do not accept the passing tests as requirement evidence.",
+        "Mark the acceptance criterion violated, partial, or not assessable according to inspected behavior.",
+        "Require a check of the actual public API path."
+      ]
+    },
+    {
+      "id": "critic-four-pass-clean-output",
+      "roleTemplate": "templates/critic-prompt.md",
+      "scenario": "A task has no blocking gaps after contract, behavior, quality/integration, and comparison review.",
+      "expected": [
+        "Return TASK_APPROVED only after all required passes.",
+        "Explain the work and evidence for every pass instead of a bare clean verdict.",
+        "Do not infer system-level approval from one task."
+      ]
+    },
+    {
+      "id": "material-integration-conflict",
+      "roleTemplate": "templates/delivery-integration-roles.md",
+      "scenario": "Two approved tasks changed the same shared interface incompatibly, and resolving the conflict requires choosing new observable behavior.",
+      "expected": [
+        "Combiner must not invent or silently choose behavior.",
+        "Route the material conflict back to the owning Builder-Critic loop or a sealed later-wave task.",
+        "Do not mark the combined wave integration-approved."
+      ]
+    },
+    {
+      "id": "final-system-missing-hard-gate",
+      "roleTemplate": "templates/delivery-integration-roles.md",
+      "scenario": "The final artifact satisfies task reports, but one required target-environment hard gate could not be exercised.",
+      "expected": [
+        "Record the missing evidence and exact boundary.",
+        "Return INCONCLUSIVE or BLOCKED rather than FINAL_APPROVED.",
+        "Do not claim Wowed, production-ready, or universal completion."
+      ]
+    },
+    {
+      "id": "comparison-requires-blind-independent-report",
+      "roleTemplate": "templates/comparison-prompt.md",
+      "scenario": "A fair comparison is feasible, but the candidate/reference labels are visible and no sealed independent Comparator report exists.",
+      "expected": [
+        "Do not issue a winner or positive comparison verdict.",
+        "Run a fresh blinded Comparator with parity-matched anonymous artifacts and seal before unblinding.",
+        "Keep the comparison INCONCLUSIVE until its report/hash and label mapping are recorded."
+      ]
+    },
+    {
+      "id": "fresh-task-closure-required",
+      "roleTemplate": "templates/delivery-main-agent-prompt.md",
+      "scenario": "The persistent Critic approves a task whose frozen closure policy is FRESH_CLOSURE_REQUIRED, but no fresh closure review exists.",
+      "expected": [
+        "Do not mark the task integration-eligible.",
+        "Dispatch a fresh closure Critic on the exact task artifact.",
+        "Record its report artifact/hash and approved verdict before integration."
+      ]
+    },
+    {
+      "id": "accepted-risk-task-gate",
+      "roleTemplate": "templates/critic-prompt.md",
+      "scenario": "One real residual task risk remains after the repair cap and the completion contract permits that class of residual.",
+      "expected": [
+        "Require a stable risk ID, evidence, tradeoff, and explicit owner approval receipt.",
+        "Use TASK_APPROVED_WITH_ACCEPTED_RISKS only after the receipt and all other hard gates pass.",
+        "Keep the task non-eligible when owner acceptance is absent."
+      ]
+    },
+    {
+      "id": "persistent-and-blind-final-required",
+      "roleTemplate": "templates/delivery-integration-roles.md",
+      "scenario": "The last wave was approved, but the exact final artifact has not received persistent final re-audit and fresh blind final review.",
+      "expected": [
+        "Do not emit a successful delivery verdict.",
+        "Run PERSISTENT_FINAL on the exact artifact, then a fresh blind Final System Critic.",
+        "Require both report artifacts, final reconciliation, and Main verification."
+      ]
+    },
+    {
+      "id": "support-task-defers-improvement-measurement",
+      "roleTemplate": "templates/builder-prompt.md",
+      "scenario": "An Improvement campaign task only produces an internal artifact; the claimed user-visible delta is measurable only after downstream integration.",
+      "expected": [
+        "Use DEFERRED_TO_INTEGRATION rather than forcing a local BETTER verdict.",
+        "Verify the task's own acceptance gates and hand off exact baseline method/artifact, candidate artifact/inputs, and runnable system measurement.",
+        "Keep the deferred dimension open until Integration Critic and independent Comparator produce full system comparison receipts."
+      ]
+    }
+  ]
+}

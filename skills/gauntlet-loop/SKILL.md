@@ -41,7 +41,7 @@ Run one of two evidence-backed campaign modes:
 
 Delivery/Improvement pipeline:
 
-`Main Agent -> parallel Builder-Critic Loop Tasks -> Combiner -> Integration Critic -> Main Review -> later waves -> final independent audit`
+`Main Agent -> parallel Builder-Critic Loop Tasks -> Combiner -> Integration Critic -> Main Review -> later waves -> fresh Final System Critic -> Main verification`
 
 Bug Hunt pipeline:
 
@@ -71,7 +71,8 @@ Before starting implementation, establish and freeze:
 7. Resource policy: quality-first, budget-capped, iteration-capped, or adaptive.
 8. Default and per-task model/effort for every applicable role: Main Agent,
    Builder, Critic, Finder, Spec Verifier, Fixer, Fix Verifier, fresh closure
-   critic, Combiner, Final Tester, Integration Verifier, and final review.
+   critic, independent Comparator, Combiner, Final Tester, Integration Critic,
+   Integration Verifier, Final System Critic, and final Main-Agent review.
 9. Concurrency policy: `ADAPTIVE`, `CEILING(N)`, or `SUSTAINED(N)`, plus
    cost/usage constraints. `SUSTAINED(N)` requires immediate useful-work
    replenishment while at least `N` compatible ready tasks exist.
@@ -82,8 +83,9 @@ Before starting implementation, establish and freeze:
     checkpoint location.
 
 Do not begin the campaign until the owner approves the resulting campaign plan.
-Use `templates/owner-intake.md`; Bug Hunt campaigns also use
-`templates/bug-campaign-state.md`.
+Use `templates/owner-intake.md`; Delivery/Improvement campaigns also use
+`templates/delivery-campaign-state.md` and `templates/delivery-task.md`; Bug
+Hunt campaigns also use `templates/bug-campaign-state.md`.
 
 ## Capability discovery
 
@@ -188,11 +190,17 @@ The Builder:
 
 The Builder cannot approve itself.
 
+In Delivery/Improvement mode, follow `references/delivery-protocol.md` and
+instantiate the role with `templates/builder-prompt.md`.
+
 ## Critic protocol
 
 Use a separate agent/context. Prefer a different model family where practical.
 The Critic independently tries to falsify quality, not merely confirm the
 Builder's claims.
+
+In Delivery/Improvement mode, instantiate the Critic with
+`templates/critic-prompt.md`.
 
 For every applicable metric, inspect the complete task and produce concrete,
 evidence-backed findings. A blocking improvement must identify:
@@ -233,6 +241,9 @@ not just previous findings.
 
 Repeat until the configured completion contract is satisfied or a truthful
 non-success terminal state is reached.
+
+The complete Delivery/Improvement task, repair, closure, integration, and final
+review state machine is in `references/delivery-protocol.md`.
 
 ## Bug Hunt campaign mode
 
@@ -325,6 +336,8 @@ Do not pass merely because an iteration count was reached.
 
 ## Wave integration
 
+### Delivery/Improvement integration
+
 After every ready task in a wave reaches its required verdict, spawn a separate
 Combiner. The Combiner:
 
@@ -345,6 +358,11 @@ being hidden in an uncontrolled integration patch.
 
 Only the integration verdict can close a wave.
 
+In Delivery/Improvement mode, use
+`templates/delivery-integration-roles.md` as separate Combiner, Integration
+Critic, and Final System Critic contexts.
+
+### Bug Hunt integration
 In Bug Hunt mode, isolated area approval is only an input to integration. The
 Combiner, Final Tester, and Integration Verifier must follow
 `references/bug-hunt-protocol.md`; unresolved specifications and blocked fixes
@@ -438,11 +456,18 @@ Load only what the current phase requires:
 - `references/quality-contract.md` and `references/metrics.md` — verdict gates;
 - `references/output-quality.md` — evidence, finding, and handoff quality gate;
 - `references/concurrency.md` — operator-controlled scheduling and replenishment;
+- `references/delivery-protocol.md` — complete Builder-Critic delivery mode;
 - `references/bug-hunt-protocol.md` — complete Finder-Verifier-Fixer mode;
 - `templates/owner-intake.md` — frozen campaign decisions;
-- `templates/*-prompt.md` and `templates/integration-roles.md` — sealed role contracts;
+- `templates/delivery-*.md`, `templates/builder-prompt.md`,
+  `templates/critic-prompt.md`, and `templates/comparison-prompt.md` —
+  Delivery/Improvement contracts;
+- `templates/main-agent-prompt.md`, `templates/finder-prompt.md`,
+  `templates/spec-verifier-prompt.md`, `templates/fixer-prompt.md`,
+  `templates/fix-verifier-prompt.md`, and `templates/integration-roles.md` —
+  Bug Hunt role contracts;
 - `templates/bug-spec.md` and `templates/bug-campaign-state.md` — Bug Hunt state;
-- `schemas/` — machine-checkable Bug Hunt handoff and checkpoint contracts;
+- `schemas/` — machine-checkable task, handoff, and campaign-state contracts;
 - `adapters/` — host capability mappings.
 
 The canonical protocol is this file. Supporting files add operational detail

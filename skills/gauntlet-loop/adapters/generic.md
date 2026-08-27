@@ -6,9 +6,12 @@ Map logical roles to the strongest capabilities the host actually provides.
 - Builder/Fixer: isolated implementation context and workspace; only one writer per workspace.
 - Critic/Spec Verifier/Fix Verifier: separate read-only context; different model family preferred where available.
 - Finder: read-only area investigation and evidence-backed specification.
+- Comparator: fresh read-only context with anonymous artifacts; seal the report before Main reveals labels.
 - Combiner: separate integration workspace, conflict ownership, and system checks.
 - Final Tester: fresh execution of the actual combined system and original reproductions.
-- Integration Critic/Verifier: separate adversarial integration-review context.
+- Integration Critic: separate adversarial integration-review context.
+- Integration Verifier: separate adversarial Bug Hunt integration-review context.
+- Final System Critic: fresh read-only review of the exact final artifact against the original owner contract.
 
 Map every requested role, model, and effort independently. Record substitutions.
 

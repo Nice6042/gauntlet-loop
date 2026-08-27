@@ -172,10 +172,11 @@ The strongest reusable patterns came from these exact sources:
 ## Decisions applied to Gauntlet Loop 1.1.0
 
 - Kept one installable skill and added two explicit campaign modes rather than creating a second implicit skill.
-- Added `references/bug-hunt-protocol.md` and `references/concurrency.md` instead of turning the canonical file into a monolith.
-- Added owner intake, bug specification, campaign-state templates, and two JSON Schemas.
-- Added `references/output-quality.md` and sealed prompts for Main Agent, Finder, Spec Verifier, Fixer, fresh Fix Verifier, Combiner, Final Tester, and Integration Verifier.
+- Added `references/delivery-protocol.md`, `references/bug-hunt-protocol.md`, and `references/concurrency.md` instead of turning the canonical file into a monolith.
+- Added owner intake, Delivery task/campaign, Bug Hunt specification/campaign templates, and four JSON Schemas.
+- Added `references/output-quality.md` and sealed prompts for both modes: Delivery Main Agent, Builder, Critic, blinded independent Comparator, Combiner, Integration Critic, Final System Critic, Bug Hunt Main Agent, Finder, Spec Verifier, Fixer, fresh Fix Verifier, Final Tester, and Integration Verifier.
 - Added evidence classification, three independent review lenses, assumption/falsifier audits, consequence-before-dedup triage, required output receipts, and pre-handoff self-checks.
+- Added stable requirement/acceptance traceability, unchanged-behavior boundaries, task conflict preflight, four-pass Critic output, artifact/environment/workload/config/cache/seed parity receipts, sealed blinded comparison reports, durable Builder/Critic artifacts, persistent final review, fresh blind final review, and Main verification for Delivery/Improvement.
 - Added causal evidence, zero-finding honesty, three specification decisions, batched area fixes, fresh post-fix review, final testing, integration verification, and Main post-merge verification.
 - Added continuous useful-work replenishment with truthful underfill, queue backpressure, failure classification, approval identity, and resume rules.
 - Added deterministic local validation and `.skill` packaging as the single repository validation entry point.

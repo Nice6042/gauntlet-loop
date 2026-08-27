@@ -15,8 +15,9 @@ SKILL_DIR = ROOT / "skills" / "gauntlet-loop"
 DIST_DIR = ROOT / "dist"
 VERSION_PATTERN = re.compile(r"^[0-9]+\.[0-9]+\.[0-9]+$")
 TOP_LEVEL_FRONTMATTER_KEY = re.compile(r"^([A-Za-z][A-Za-z0-9_-]*):(?:\s|$)")
+INLINE_CODE = re.compile(r"`([^`]+)`")
 LOCAL_SKILL_PATH = re.compile(
-    r"(?<![A-Za-z0-9._/-])((?:references|templates|schemas|adapters)/[A-Za-z0-9._/-]+)"
+    r"(?<![A-Za-z0-9._/-])((?:references|templates|schemas|adapters)/[A-Za-z0-9._*/-]+)"
 )
 ALLOWED_FRONTMATTER_KEYS = {
     "name",
@@ -38,14 +39,23 @@ REQUIRED_PATHS = (
     "evals/activation-cases.json",
     "evals/bug-hunt-cases.json",
     "evals/output-quality-cases.json",
+    "evals/delivery-output-cases.json",
     "skills/gauntlet-loop/SKILL.md",
     "skills/gauntlet-loop/references/core-protocol.md",
     "skills/gauntlet-loop/references/metrics.md",
     "skills/gauntlet-loop/references/quality-contract.md",
     "skills/gauntlet-loop/references/output-quality.md",
     "skills/gauntlet-loop/references/concurrency.md",
+    "skills/gauntlet-loop/references/delivery-protocol.md",
     "skills/gauntlet-loop/references/bug-hunt-protocol.md",
     "skills/gauntlet-loop/templates/owner-intake.md",
+    "skills/gauntlet-loop/templates/delivery-task.md",
+    "skills/gauntlet-loop/templates/delivery-campaign-state.md",
+    "skills/gauntlet-loop/templates/delivery-main-agent-prompt.md",
+    "skills/gauntlet-loop/templates/builder-prompt.md",
+    "skills/gauntlet-loop/templates/critic-prompt.md",
+    "skills/gauntlet-loop/templates/comparison-prompt.md",
+    "skills/gauntlet-loop/templates/delivery-integration-roles.md",
     "skills/gauntlet-loop/templates/bug-spec.md",
     "skills/gauntlet-loop/templates/bug-campaign-state.md",
     "skills/gauntlet-loop/templates/main-agent-prompt.md",
@@ -56,6 +66,8 @@ REQUIRED_PATHS = (
     "skills/gauntlet-loop/templates/integration-roles.md",
     "skills/gauntlet-loop/schemas/bug-spec.schema.json",
     "skills/gauntlet-loop/schemas/bug-campaign.schema.json",
+    "skills/gauntlet-loop/schemas/delivery-task.schema.json",
+    "skills/gauntlet-loop/schemas/delivery-campaign.schema.json",
     "skills/gauntlet-loop/adapters/generic.md",
 )
 MANIFEST_VERSION_PATHS = (
@@ -172,10 +184,13 @@ def validate_local_references(errors: list[str]) -> None:
         except (OSError, UnicodeError) as exc:
             errors.append(f"cannot inspect references in {source.relative_to(ROOT).as_posix()}: {exc}")
             continue
-        for relative in sorted(set(LOCAL_SKILL_PATH.findall(text))):
-            if not (SKILL_DIR / relative).is_file() and not (SKILL_DIR / relative).is_dir():
-                source_name = source.relative_to(SKILL_DIR).as_posix()
-                errors.append(f"{source_name} references missing skill path: {relative}")
+        for code_span in INLINE_CODE.findall(text):
+            for relative in sorted(set(LOCAL_SKILL_PATH.findall(code_span))):
+                if "*" in relative:
+                    continue
+                if not (SKILL_DIR / relative).is_file() and not (SKILL_DIR / relative).is_dir():
+                    source_name = source.relative_to(SKILL_DIR).as_posix()
+                    errors.append(f"{source_name} references missing skill path: {relative}")
 
 
 def validate_manifests(version: str, errors: list[str]) -> None:
@@ -212,6 +227,7 @@ def validate_evals(errors: list[str]) -> None:
         "evals/activation-cases.json",
         "evals/bug-hunt-cases.json",
         "evals/output-quality-cases.json",
+        "evals/delivery-output-cases.json",
     ):
         parsed = load_json(relative, errors)
         if not isinstance(parsed, dict):

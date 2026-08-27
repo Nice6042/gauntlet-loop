@@ -17,7 +17,10 @@
 
 `Builder -> Critic -> verified repair -> complete re-audit`
 
-Run dependency-safe Loop Tasks, combine an approved wave, run an Integration Critic, and launch later waves until the frozen completion contract closes.
+Freeze desired-state requirements and baseline/comparison dimensions, run
+dependency-safe Builder-Critic task loops with complete re-audit, combine an
+approved wave, run an Integration Critic, launch sealed later waves as needed,
+then use a fresh Final System Critic and Main verification.
 
 ## Bug Hunt mode
 
@@ -25,4 +28,7 @@ Run dependency-safe Loop Tasks, combine an approved wave, run an Integration Cri
 
 Run one isolated worktree per area. Review candidate bug specifications for at most three verifier decisions, implement approved specifications as an area batch, independently verify fixes and regressions, then use a Combiner, Final Tester, Integration Verifier, merge gate, and Main Agent post-merge verification.
 
-Never weaken the frozen completion contract, silently expand permissions, invent work to fill concurrency, implement an unapproved bug specification, or turn resource/review exhaustion into a pass.
+Never weaken the frozen completion contract, silently expand permissions,
+invent work to fill concurrency, implement an unapproved bug specification,
+claim improvement without same-method evidence, or turn resource/review
+exhaustion into a pass.

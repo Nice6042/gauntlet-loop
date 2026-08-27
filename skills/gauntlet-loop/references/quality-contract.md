@@ -12,6 +12,21 @@ The owner freezes per-metric thresholds, hard gates, residual-finding allowances
 ## Main-Agent Recommended
 The Main Agent proposes a risk-based mixed contract for explicit owner approval.
 
+## Delivery/Improvement additive gates
+
+Delivery closure also requires every frozen requirement/acceptance ID to have
+artifact-bound evidence; unchanged-behavior and target-surface boundaries to
+pass; every promised improvement/comparison claim to use same-method evidence
+on frozen dimensions; every task and wave to pass independent Critic and
+integration gates; and a fresh Final System Critic plus Main verification of
+the exact final artifact. Task completion or a positive delta cannot compensate
+for a failed system hard gate.
+
+`COMPLETE_WITH_DISCLOSED_ACCEPTED_RISKS` is valid only when the selected
+completion contract allows residuals, every system hard gate permits them, and
+the owner explicitly accepts each stable risk ID after seeing evidence and
+tradeoffs. Agent or Main rulings alone are not owner acceptance.
+
 ## Bug Hunt additive gates
 
 Bug Hunt closure also requires frozen area/search coverage to be accounted for;

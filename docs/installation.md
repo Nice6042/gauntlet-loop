@@ -28,10 +28,10 @@ Preserve the complete directory: `SKILL.md`, `references/`, `templates/`,
 
 ## Verify
 
-Confirm that the installed skill contains `SKILL.md`,
-`references/bug-hunt-protocol.md`, `references/concurrency.md`,
-`references/output-quality.md`, all bundled `templates/*-prompt.md`,
-`templates/integration-roles.md`, both state templates, and both schemas.
+Confirm that the installed skill contains `SKILL.md`, both campaign protocols,
+`references/concurrency.md`, `references/output-quality.md`, every bundled role
+prompt, both integration-role files, Delivery and Bug Hunt state/task
+templates, and all four schemas.
 The installed skill name remains `gauntlet-loop`. Activation is explicit only:
 `Use Gauntlet Loop on this delivery task.` or
 `Use Gauntlet Loop in Bug Hunt mode on this repository.`

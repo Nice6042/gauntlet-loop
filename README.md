@@ -6,7 +6,8 @@ campaigns.
 Gauntlet Loop provides two modes:
 
 - **Delivery/Improvement:** dependency-safe Builder–Critic loops for projects,
-  features, and targeted improvements.
+  features, and same-method evidence-backed improvements, followed by
+  integration and fresh final-system review.
 - **Bug Hunt:** isolated Finder–Spec-Verifier–Fixer–Fix-Verifier area loops,
   followed by combined testing, adversarial integration review, merge, and Main
   Agent verification.
@@ -16,10 +17,12 @@ resumable state, per-role/task model and effort routing, and operator-selected
 `ADAPTIVE`, `CEILING(N)`, or continuously replenished `SUSTAINED(N)`
 concurrency.
 
-Bug Hunt ships sealed prompts for Main Agent, Finder, Spec Verifier, Fixer,
-fresh Fix Verifier, Combiner, Final Tester, and Integration Verifier, plus a
-shared evidence/output-quality contract. Hosts route these templates to the
-operator-selected model and effort.
+Each mode ships sealed role prompts and structured outputs. Delivery includes
+Main Agent, Builder, Critic, independent Comparator, Combiner, Integration
+Critic, and Final System Critic contracts. Bug Hunt includes Main Agent,
+Finder, Spec Verifier, Fixer, fresh Fix Verifier, Combiner, Final Tester, and
+Integration Verifier contracts. Hosts route each role to the operator-selected
+model and effort under one shared evidence/output-quality contract.
 
 ## Install
 

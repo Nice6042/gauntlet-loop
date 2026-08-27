@@ -118,6 +118,7 @@ The operator may set defaults and per-task overrides for every logical role:
 - Main Agent
 - Builder
 - Critic
+- independent Comparator
 - Finder
 - Spec Verifier
 - Fixer
@@ -125,7 +126,9 @@ The operator may set defaults and per-task overrides for every logical role:
 - fresh closure critic
 - Combiner
 - Final Tester
+- Integration Critic
 - Integration Verifier
+- Final System Critic
 - final Main-Agent review
 
 Record requested and actual model/effort. If the host cannot honor a route, disclose the substitution before relying on its verdict. A stronger model does not remove role separation or evidence requirements.

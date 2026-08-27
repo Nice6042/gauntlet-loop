@@ -61,7 +61,17 @@
             }
           }
         }
-      }
+      },
+      "allOf": [
+        {
+          "if": {"properties": {"mode": {"const": "ADAPTIVE"}}},
+          "then": {"properties": {"target": {"type": "null"}}}
+        },
+        {
+          "if": {"properties": {"mode": {"enum": ["CEILING", "SUSTAINED"]}}},
+          "then": {"properties": {"target": {"type": "integer", "minimum": 1}}}
+        }
+      ]
     },
     "roleRouting": {
       "type": "object",
@@ -70,13 +80,14 @@
         "additionalProperties": false,
         "required": ["requestedModel", "requestedEffort", "actualModel", "actualEffort"],
         "properties": {
-          "requestedModel": {"type": "string"},
-          "requestedEffort": {"type": "string"},
-          "actualModel": {"type": "string"},
-          "actualEffort": {"type": "string"},
+          "requestedModel": {"type": "string", "minLength": 1},
+          "requestedEffort": {"type": "string", "minLength": 1},
+          "actualModel": {"type": "string", "minLength": 1},
+          "actualEffort": {"type": "string", "minLength": 1},
           "notes": {"type": "string"}
         }
-      }
+      },
+      "required": ["mainAgent", "finderDefault", "specVerifierDefault", "fixerDefault", "fixVerifierDefault", "combiner", "finalTester", "integrationVerifier", "mainFinalReview"]
     },
     "tasks": {
       "type": "array",

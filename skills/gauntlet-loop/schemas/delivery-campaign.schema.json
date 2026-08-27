@@ -1,0 +1,581 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/Nice6042/gauntlet-loop/schemas/delivery-campaign.schema.json",
+  "title": "Gauntlet Loop Delivery Campaign State",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schemaVersion",
+    "campaignId",
+    "mode",
+    "campaignKind",
+    "repository",
+    "baseCommit",
+    "scope",
+    "permissions",
+    "requiredEvidence",
+    "checkpointLocation",
+    "ownerControl",
+    "comparisons",
+    "improvementClaims",
+    "completionContract",
+    "resourcePolicy",
+    "repairPolicy",
+    "concurrency",
+    "roleRouting",
+    "activeScheduler",
+    "findings",
+    "rulings",
+    "requirements",
+    "tasks",
+    "events",
+    "artifacts",
+    "waves",
+    "taskWaveCoverage",
+    "finalGate",
+    "verdict"
+  ],
+  "properties": {
+    "schemaVersion": {"const": "1.0"},
+    "campaignId": {"type": "string", "minLength": 1},
+    "mode": {"const": "delivery-improvement"},
+    "campaignKind": {"enum": ["new_project", "feature_addition", "improvement"]},
+    "repository": {"type": "string", "minLength": 1},
+    "baseCommit": {"type": "string", "minLength": 7},
+    "scope": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["included", "excluded", "unchangedBehavior", "targetEnvironments"],
+      "properties": {
+        "included": {"type": "array", "minItems": 1, "items": {"type": "string"}},
+        "excluded": {"type": "array", "items": {"type": "string"}},
+        "unchangedBehavior": {"type": "array", "items": {"type": "string"}},
+        "targetEnvironments": {"type": "array", "minItems": 1, "items": {"type": "string"}}
+      }
+    },
+    "permissions": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["allowed", "prohibited"],
+      "properties": {
+        "allowed": {"type": "array", "items": {"type": "string"}, "uniqueItems": true},
+        "prohibited": {"type": "array", "items": {"type": "string"}, "uniqueItems": true}
+      }
+    },
+    "requiredEvidence": {"type": "array", "minItems": 1, "items": {"type": "string"}, "uniqueItems": true},
+    "checkpointLocation": {"type": "string", "minLength": 1},
+    "ownerControl": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["planApproved", "amendments", "acceptedRiskAuthority"],
+      "properties": {
+        "planApproved": {"type": "boolean"},
+        "amendments": {"type": "array", "items": {"type": "string"}},
+        "acceptedRiskAuthority": {"type": "string", "minLength": 1}
+      }
+    },
+    "comparisons": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["claimId", "reference", "dimension", "blindingFeasible", "blindingPolicy", "blindingReason", "independentComparator", "finalComparisonReceipt"],
+        "properties": {
+          "claimId": {"type": "string", "minLength": 1},
+          "reference": {"type": "string", "minLength": 1},
+          "dimension": {"type": "string", "minLength": 1},
+          "blindingFeasible": {"type": "boolean"},
+          "blindingPolicy": {"enum": ["BLIND_REQUIRED", "INFEASIBLE_WITH_REASON"]},
+          "blindingReason": {"type": "string", "minLength": 1},
+          "independentComparator": {"type": ["string", "null"]},
+          "finalComparisonReceipt": {"anyOf": [{"$ref": "delivery-task.schema.json#/$defs/comparisonResultReceipt"}, {"type": "null"}]}
+        },
+        "allOf": [
+          {
+            "if": {"properties": {"blindingFeasible": {"const": true}}},
+            "then": {
+              "properties": {
+                "blindingPolicy": {"const": "BLIND_REQUIRED"},
+                "independentComparator": {"type": "string", "minLength": 1}
+              }
+            }
+          },
+          {
+            "if": {"properties": {"blindingFeasible": {"const": false}}},
+            "then": {"properties": {"blindingPolicy": {"const": "INFEASIBLE_WITH_REASON"}}}
+          }
+        ]
+      }
+    },
+    "improvementClaims": {
+      "type": "array",
+      "items": {"$ref": "delivery-task.schema.json#/$defs/improvementClaim"}
+    },
+    "completionContract": {"type": "string", "minLength": 1},
+    "resourcePolicy": {"type": "string", "minLength": 1},
+    "repairPolicy": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["maximumAttempts", "breakerPolicy"],
+      "properties": {
+        "maximumAttempts": {"type": "integer", "minimum": 1},
+        "breakerPolicy": {"type": "string", "minLength": 1}
+      }
+    },
+    "concurrency": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["mode", "target", "underfillEvents"],
+      "properties": {
+        "mode": {"enum": ["ADAPTIVE", "CEILING", "SUSTAINED"]},
+        "target": {"type": ["integer", "null"], "minimum": 1},
+        "underfillEvents": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["startedAt", "reason", "retryEvent"],
+            "properties": {
+              "startedAt": {"type": "string", "minLength": 1},
+              "endedAt": {"type": ["string", "null"]},
+              "reason": {"type": "string", "minLength": 1},
+              "retryEvent": {"type": ["string", "null"]}
+            }
+          }
+        }
+      },
+      "allOf": [
+        {
+          "if": {"properties": {"mode": {"const": "ADAPTIVE"}}},
+          "then": {"properties": {"target": {"type": "null"}}}
+        },
+        {
+          "if": {"properties": {"mode": {"enum": ["CEILING", "SUSTAINED"]}}},
+          "then": {"properties": {"target": {"type": "integer", "minimum": 1}}}
+        }
+      ]
+    },
+    "roleRouting": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["requestedModel", "requestedEffort", "actualModel", "actualEffort"],
+        "properties": {
+          "requestedModel": {"type": "string", "minLength": 1},
+          "requestedEffort": {"type": "string", "minLength": 1},
+          "actualModel": {"type": "string", "minLength": 1},
+          "actualEffort": {"type": "string", "minLength": 1},
+          "notes": {"type": "string"}
+        }
+      },
+      "required": ["mainAgent", "builderDefault", "criticDefault", "freshClosureCriticDefault", "independentComparator", "combiner", "integrationCritic", "finalSystemCritic", "mainFinalReview"]
+    },
+    "activeScheduler": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["taskId", "attempt", "role", "workspace", "model", "effort", "state", "startedAt", "finishedAt", "blocker", "approvalRequestId"],
+        "properties": {
+          "taskId": {"type": "string", "minLength": 1},
+          "attempt": {"type": "integer", "minimum": 1},
+          "role": {"type": "string", "minLength": 1},
+          "workspace": {"type": ["string", "null"]},
+          "model": {"type": "string", "minLength": 1},
+          "effort": {"type": "string", "minLength": 1},
+          "state": {"enum": ["QUEUED", "RUNNABLE", "RUNNING", "SUCCEEDED", "FAILED", "BLOCKED", "AWAITING_APPROVAL", "CANCELLED"]},
+          "startedAt": {"type": ["string", "null"]},
+          "finishedAt": {"type": ["string", "null"]},
+          "blocker": {"type": ["string", "null"]},
+          "approvalRequestId": {"type": ["string", "null"]}
+        }
+      }
+    },
+    "findings": {
+      "type": "array",
+      "items": {"$ref": "delivery-task.schema.json#/properties/findings/items"}
+    },
+    "rulings": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["rulingId", "findingIds", "decision", "reason", "costIfWrong", "ownerApprovalReceipt", "timestamp"],
+        "properties": {
+          "rulingId": {"type": "string", "minLength": 1},
+          "findingIds": {"type": "array", "items": {"type": "string"}, "uniqueItems": true},
+          "decision": {"type": "string", "minLength": 1},
+          "reason": {"type": "string", "minLength": 1},
+          "costIfWrong": {"type": "string", "minLength": 1},
+          "ownerApprovalReceipt": {"type": ["string", "null"]},
+          "timestamp": {"type": "string", "minLength": 1}
+        }
+      }
+    },
+    "requirements": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["id", "ownerTaskId", "surface", "state", "evidence"],
+        "properties": {
+          "id": {"type": "string", "minLength": 1},
+          "ownerTaskId": {"type": "string", "minLength": 1},
+          "surface": {"type": "string", "minLength": 1},
+          "state": {"enum": ["PLANNED", "SATISFIED", "VIOLATED", "PARTIAL", "NOT_ASSESSABLE"]},
+          "evidence": {"type": "array", "minItems": 1, "items": {"type": "string", "minLength": 1}}
+        }
+      }
+    },
+    "tasks": {"type": "array", "items": {"$ref": "delivery-task.schema.json"}},
+    "events": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["eventId", "taskId", "attempt", "from", "to", "reasonEvidence", "timestamp"],
+        "properties": {
+          "eventId": {"type": "string", "minLength": 1},
+          "taskId": {"type": "string", "minLength": 1},
+          "attempt": {"type": "integer", "minimum": 1},
+          "from": {"enum": [null, "QUEUED", "RUNNABLE", "RUNNING", "PLANNED", "BUILDING", "DONE_PENDING_REVIEW", "DONE_WITH_CONCERNS", "NEEDS_CONTEXT", "SPEC_CONFLICT", "BLOCKED", "TASK_APPROVED", "TASK_APPROVED_WITH_ACCEPTED_RISKS", "TASK_REVISION_REQUIRED", "TASK_INCONCLUSIVE", "TASK_BLOCKED", "SUCCEEDED", "FAILED", "AWAITING_APPROVAL", "CANCELLED"]},
+          "to": {"enum": ["QUEUED", "RUNNABLE", "RUNNING", "PLANNED", "BUILDING", "DONE_PENDING_REVIEW", "DONE_WITH_CONCERNS", "NEEDS_CONTEXT", "SPEC_CONFLICT", "BLOCKED", "TASK_APPROVED", "TASK_APPROVED_WITH_ACCEPTED_RISKS", "TASK_REVISION_REQUIRED", "TASK_INCONCLUSIVE", "TASK_BLOCKED", "SUCCEEDED", "FAILED", "AWAITING_APPROVAL", "CANCELLED"]},
+          "reasonEvidence": {"type": "array", "minItems": 1, "items": {"type": "string"}},
+          "timestamp": {"type": "string", "minLength": 1}
+        }
+      }
+    },
+    "artifacts": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["artifactId", "producerTaskId", "producerRole", "repositoryHead", "kind", "location", "verificationState"],
+        "properties": {
+          "artifactId": {"type": "string", "minLength": 1},
+          "sha256": {"type": ["string", "null"], "pattern": "^[a-f0-9]{64}$"},
+          "producerTaskId": {"type": "string", "minLength": 1},
+          "producerRole": {"type": "string", "minLength": 1},
+          "repositoryHead": {"type": "string", "minLength": 7},
+          "kind": {"enum": ["raw_evidence", "role_summary", "baseline", "task_brief", "builder_report", "diff", "test_receipt", "critic_report", "comparison_report", "closure_receipt", "integration_report", "final_report"]},
+          "location": {"type": "string", "minLength": 1},
+          "verificationState": {"enum": ["UNVERIFIED", "VERIFIED", "REJECTED", "SUPERSEDED"]}
+        }
+      }
+    },
+    "waves": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["waveId", "taskIds", "integrationArtifact", "integrationArtifactSha256", "integrationCriticReportArtifactId", "integrationCriticReportSha256", "criticVerdict", "mainReview", "mainReviewEvidence"],
+        "properties": {
+          "waveId": {"type": "string", "minLength": 1},
+          "taskIds": {"type": "array", "minItems": 1, "items": {"type": "string"}, "uniqueItems": true},
+          "integrationArtifact": {"type": ["string", "null"]},
+          "integrationArtifactSha256": {"type": ["string", "null"], "pattern": "^[a-f0-9]{64}$"},
+          "integrationCriticReportArtifactId": {"type": ["string", "null"]},
+          "integrationCriticReportSha256": {"type": ["string", "null"], "pattern": "^[a-f0-9]{64}$"},
+          "criticVerdict": {"enum": ["PENDING", "INTEGRATION_APPROVED", "INTEGRATION_REVISION_REQUIRED", "INCONCLUSIVE", "BLOCKED"]},
+          "mainReview": {"enum": ["PENDING", "APPROVED", "LATER_WAVE_REQUIRED", "BLOCKED"]},
+          "mainReviewEvidence": {"type": "array", "minItems": 1, "items": {"type": "string", "minLength": 1}}
+        },
+        "allOf": [
+          {
+            "if": {"properties": {"criticVerdict": {"const": "INTEGRATION_APPROVED"}}},
+            "then": {
+              "properties": {
+                "integrationArtifact": {"type": "string", "minLength": 1},
+                "integrationArtifactSha256": {"type": "string", "pattern": "^[a-f0-9]{64}$"},
+                "integrationCriticReportArtifactId": {"type": "string", "minLength": 1},
+                "integrationCriticReportSha256": {"type": "string", "pattern": "^[a-f0-9]{64}$"}
+              }
+            }
+          },
+          {
+            "if": {"properties": {"mainReview": {"const": "APPROVED"}}},
+            "then": {"properties": {"criticVerdict": {"const": "INTEGRATION_APPROVED"}}}
+          }
+        ]
+      }
+    },
+    "taskWaveCoverage": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["taskId", "taskArtifactId", "closureReceiptId", "closureReceiptSha256", "waveId", "integrationArtifactId", "status"],
+        "properties": {
+          "taskId": {"type": "string", "minLength": 1},
+          "taskArtifactId": {"type": "string", "minLength": 1},
+          "closureReceiptId": {"type": "string", "minLength": 1},
+          "closureReceiptSha256": {"type": "string", "pattern": "^[a-f0-9]{64}$"},
+          "waveId": {"type": "string", "minLength": 1},
+          "integrationArtifactId": {"type": "string", "minLength": 1},
+          "status": {"const": "COVERED"}
+        }
+      }
+    },
+    "finalGate": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["reviewedArtifactId", "reviewedHead", "reviewedArtifactSha256", "persistentFinalReportArtifactId", "persistentFinalReportSha256", "persistentFinalVerdict", "blindReportArtifactId", "blindReportSha256", "blindVerdict", "reconciliationReportArtifactId", "reconciliationReportSha256", "finalCriticVerdict", "mainVerificationReceiptId", "mainVerificationReceiptSha256", "mainVerified", "requirementsReconciled", "deferredMetricsReconciled", "improvementClaimsVerified", "improvementClaimCoverage", "improvementClaimCoverageComplete", "systemImprovementComparisons", "referenceComparisonCoverage", "referenceComparisonCoverageComplete", "taskWaveCoverageComplete", "artifactLedgerReconciled", "acceptedRiskCoverage", "acceptedRiskCoverageComplete", "openHardFindings", "risksAcceptedByOwner"],
+      "properties": {
+        "reviewedArtifactId": {"type": ["string", "null"]},
+        "reviewedHead": {"type": ["string", "null"]},
+        "reviewedArtifactSha256": {"type": ["string", "null"], "pattern": "^[a-f0-9]{64}$"},
+        "persistentFinalReportArtifactId": {"type": ["string", "null"]},
+        "persistentFinalReportSha256": {"type": ["string", "null"], "pattern": "^[a-f0-9]{64}$"},
+        "persistentFinalVerdict": {"enum": ["PENDING", "FINAL_APPROVED", "FINAL_REVISION_REQUIRED", "INCONCLUSIVE", "BLOCKED"]},
+        "blindReportArtifactId": {"type": ["string", "null"]},
+        "blindReportSha256": {"type": ["string", "null"], "pattern": "^[a-f0-9]{64}$"},
+        "blindVerdict": {"enum": ["PENDING", "FINAL_APPROVED", "FINAL_REVISION_REQUIRED", "INCONCLUSIVE", "BLOCKED"]},
+        "reconciliationReportArtifactId": {"type": ["string", "null"]},
+        "reconciliationReportSha256": {"type": ["string", "null"], "pattern": "^[a-f0-9]{64}$"},
+        "finalCriticVerdict": {"enum": ["PENDING", "FINAL_APPROVED", "FINAL_REVISION_REQUIRED", "INCONCLUSIVE", "BLOCKED"]},
+        "mainVerificationReceiptId": {"type": ["string", "null"]},
+        "mainVerificationReceiptSha256": {"type": ["string", "null"], "pattern": "^[a-f0-9]{64}$"},
+        "mainVerified": {"type": "boolean"},
+        "requirementsReconciled": {"type": "boolean"},
+        "deferredMetricsReconciled": {"type": "boolean"},
+        "improvementClaimsVerified": {"type": "boolean"},
+        "improvementClaimCoverage": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["claimId", "dimension", "comparisonArtifactId", "status"],
+            "properties": {
+              "claimId": {"type": "string", "minLength": 1},
+              "dimension": {"type": "string", "minLength": 1},
+              "comparisonArtifactId": {"type": "string", "minLength": 1},
+              "status": {"const": "COVERED"}
+            }
+          }
+        },
+        "improvementClaimCoverageComplete": {"type": "boolean"},
+        "systemImprovementComparisons": {
+          "type": "array",
+          "items": {"$ref": "delivery-task.schema.json#/properties/comparisons/items"}
+        },
+        "referenceComparisonCoverage": {
+          "type": "array",
+          "items": {"$ref": "delivery-task.schema.json#/properties/comparisons/items"}
+        },
+        "referenceComparisonCoverageComplete": {"type": "boolean"},
+        "taskWaveCoverageComplete": {"type": "boolean"},
+        "artifactLedgerReconciled": {"type": "boolean"},
+        "acceptedRiskCoverage": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["findingId", "riskId", "taskId", "approvalArtifactId", "status"],
+            "properties": {
+              "findingId": {"type": "string", "minLength": 1},
+              "riskId": {"type": "string", "minLength": 1},
+              "taskId": {"type": "string", "minLength": 1},
+              "approvalArtifactId": {"type": "string", "minLength": 1},
+              "status": {"const": "COVERED"}
+            }
+          }
+        },
+        "acceptedRiskCoverageComplete": {"type": "boolean"},
+        "openHardFindings": {"type": "integer", "minimum": 0},
+        "risksAcceptedByOwner": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["riskId", "ownerIdentity", "approvalArtifactId", "evidence", "tradeoff"],
+            "properties": {
+              "riskId": {"type": "string", "minLength": 1},
+              "ownerIdentity": {"type": "string", "minLength": 1},
+              "approvalArtifactId": {"type": "string", "minLength": 1},
+              "evidence": {"type": "array", "minItems": 1, "items": {"type": "string", "minLength": 1}},
+              "tradeoff": {"type": "string", "minLength": 1}
+            }
+          }
+        }
+      }
+    },
+    "verdict": {"enum": ["PLANNED", "ACTIVE", "COMPLETE", "COMPLETE_WITH_DISCLOSED_ACCEPTED_RISKS", "PARTIAL", "INCONCLUSIVE", "FAILED", "BUDGET_EXHAUSTED_NOT_WOWED", "ITERATION_LIMIT_REACHED_NOT_WOWED", "BLOCKED_BY_CAPABILITY", "BLOCKED_BY_PERMISSION", "BLOCKED_BY_DEPENDENCY"]}
+  },
+  "allOf": [
+    {
+      "if": {"properties": {"campaignKind": {"const": "new_project"}}},
+      "then": {"properties": {"tasks": {"items": {"properties": {"campaignKind": {"const": "new_project"}}}}}}
+    },
+    {
+      "if": {"properties": {"campaignKind": {"const": "feature_addition"}}},
+      "then": {"properties": {"tasks": {"items": {"properties": {"campaignKind": {"const": "feature_addition"}}}}}}
+    },
+    {
+      "if": {"properties": {"campaignKind": {"const": "improvement"}}},
+      "then": {
+        "properties": {
+          "tasks": {
+            "items": {"properties": {"campaignKind": {"const": "improvement"}}},
+            "contains": {"properties": {"improvementMeasurementPolicy": {"enum": ["TASK_LEVEL", "DEFERRED_TO_INTEGRATION"]}}}
+          }
+        }
+      }
+    },
+    {
+      "if": {"properties": {"campaignKind": {"const": "improvement"}, "verdict": {"enum": ["COMPLETE", "COMPLETE_WITH_DISCLOSED_ACCEPTED_RISKS"]}}},
+      "then": {
+        "properties": {
+          "improvementClaims": {
+            "minItems": 1,
+            "not": {"contains": {"properties": {"state": {"enum": ["PLANNED", "TASK_VERIFIED", "DEFERRED", "FAILED", "INCONCLUSIVE"]}}}}
+          },
+          "finalGate": {
+            "properties": {
+              "improvementClaimsVerified": {"const": true},
+              "improvementClaimCoverage": {"minItems": 1},
+              "improvementClaimCoverageComplete": {"const": true},
+              "systemImprovementComparisons": {
+                "minItems": 1,
+                "not": {"contains": {"properties": {"verdict": {"enum": ["EQUAL", "WORSE", "TRADEOFF", "INCONCLUSIVE"]}}}}
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {"properties": {"comparisons": {"minItems": 1}, "verdict": {"enum": ["COMPLETE", "COMPLETE_WITH_DISCLOSED_ACCEPTED_RISKS"]}}},
+      "then": {
+        "properties": {
+          "comparisons": {"items": {"properties": {"finalComparisonReceipt": {"type": "object"}}}},
+          "finalGate": {
+            "properties": {
+              "referenceComparisonCoverage": {
+                "minItems": 1,
+                "not": {"contains": {"properties": {"verdict": {"const": "INCONCLUSIVE"}}}}
+              },
+              "referenceComparisonCoverageComplete": {"const": true}
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {"properties": {"comparisons": {"maxItems": 0}, "verdict": {"enum": ["COMPLETE", "COMPLETE_WITH_DISCLOSED_ACCEPTED_RISKS"]}}},
+      "then": {
+        "properties": {
+          "finalGate": {
+            "properties": {
+              "referenceComparisonCoverage": {"maxItems": 0},
+              "referenceComparisonCoverageComplete": {"const": true}
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {"properties": {"comparisons": {"contains": {"properties": {"blindingFeasible": {"const": false}}}}, "verdict": {"enum": ["COMPLETE", "COMPLETE_WITH_DISCLOSED_ACCEPTED_RISKS"]}}},
+      "then": false
+    },
+    {
+      "if": {"properties": {"verdict": {"const": "COMPLETE"}}},
+      "then": {
+        "properties": {
+          "finalGate": {
+            "properties": {
+              "reviewedArtifactId": {"type": "string", "minLength": 1},
+              "reviewedHead": {"type": "string", "minLength": 7},
+              "reviewedArtifactSha256": {"type": "string", "pattern": "^[a-f0-9]{64}$"},
+              "persistentFinalReportArtifactId": {"type": "string", "minLength": 1},
+              "persistentFinalReportSha256": {"type": "string", "pattern": "^[a-f0-9]{64}$"},
+              "persistentFinalVerdict": {"const": "FINAL_APPROVED"},
+              "blindReportArtifactId": {"type": "string", "minLength": 1},
+              "blindReportSha256": {"type": "string", "pattern": "^[a-f0-9]{64}$"},
+              "blindVerdict": {"const": "FINAL_APPROVED"},
+              "reconciliationReportArtifactId": {"type": "string", "minLength": 1},
+              "reconciliationReportSha256": {"type": "string", "pattern": "^[a-f0-9]{64}$"},
+              "finalCriticVerdict": {"const": "FINAL_APPROVED"},
+              "mainVerificationReceiptId": {"type": "string", "minLength": 1},
+              "mainVerificationReceiptSha256": {"type": "string", "pattern": "^[a-f0-9]{64}$"},
+              "mainVerified": {"const": true},
+              "requirementsReconciled": {"const": true},
+              "deferredMetricsReconciled": {"const": true},
+              "improvementClaimsVerified": {"const": true},
+              "taskWaveCoverageComplete": {"const": true},
+              "artifactLedgerReconciled": {"const": true},
+              "acceptedRiskCoverage": {"maxItems": 0},
+              "acceptedRiskCoverageComplete": {"const": true},
+              "openHardFindings": {"const": 0},
+              "risksAcceptedByOwner": {"maxItems": 0}
+            }
+          },
+          "tasks": {"not": {"contains": {"properties": {"verdict": {"const": "TASK_APPROVED_WITH_ACCEPTED_RISKS"}}}}},
+          "findings": {"not": {"contains": {"properties": {"status": {"const": "ACCEPTED_RISK_BY_OWNER"}}}}}
+        }
+      }
+    },
+    {
+      "if": {"properties": {"verdict": {"const": "COMPLETE_WITH_DISCLOSED_ACCEPTED_RISKS"}}},
+      "then": {
+        "properties": {
+          "finalGate": {
+            "properties": {
+              "reviewedArtifactId": {"type": "string", "minLength": 1},
+              "reviewedHead": {"type": "string", "minLength": 7},
+              "reviewedArtifactSha256": {"type": "string", "pattern": "^[a-f0-9]{64}$"},
+              "persistentFinalReportArtifactId": {"type": "string", "minLength": 1},
+              "persistentFinalReportSha256": {"type": "string", "pattern": "^[a-f0-9]{64}$"},
+              "persistentFinalVerdict": {"const": "FINAL_APPROVED"},
+              "blindReportArtifactId": {"type": "string", "minLength": 1},
+              "blindReportSha256": {"type": "string", "pattern": "^[a-f0-9]{64}$"},
+              "blindVerdict": {"const": "FINAL_APPROVED"},
+              "reconciliationReportArtifactId": {"type": "string", "minLength": 1},
+              "reconciliationReportSha256": {"type": "string", "pattern": "^[a-f0-9]{64}$"},
+              "finalCriticVerdict": {"const": "FINAL_APPROVED"},
+              "mainVerificationReceiptId": {"type": "string", "minLength": 1},
+              "mainVerificationReceiptSha256": {"type": "string", "pattern": "^[a-f0-9]{64}$"},
+              "mainVerified": {"const": true},
+              "requirementsReconciled": {"const": true},
+              "deferredMetricsReconciled": {"const": true},
+              "improvementClaimsVerified": {"const": true},
+              "taskWaveCoverageComplete": {"const": true},
+              "artifactLedgerReconciled": {"const": true},
+              "openHardFindings": {"const": 0},
+              "acceptedRiskCoverage": {"minItems": 1},
+              "acceptedRiskCoverageComplete": {"const": true},
+              "risksAcceptedByOwner": {"minItems": 1}
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {"properties": {"verdict": {"not": {"const": "PLANNED"}}}},
+      "then": {"properties": {"ownerControl": {"properties": {"planApproved": {"const": true}}}}}
+    },
+    {
+      "if": {"properties": {"verdict": {"enum": ["COMPLETE", "COMPLETE_WITH_DISCLOSED_ACCEPTED_RISKS"]}}},
+      "then": {
+        "properties": {
+          "requirements": {"not": {"contains": {"properties": {"state": {"enum": ["PLANNED", "VIOLATED", "PARTIAL", "NOT_ASSESSABLE"]}}}}},
+          "tasks": {"minItems": 1, "not": {"contains": {"properties": {"verdict": {"enum": ["PLANNED", "BUILDING", "DONE_PENDING_REVIEW", "DONE_WITH_CONCERNS", "NEEDS_CONTEXT", "SPEC_CONFLICT", "BLOCKED", "TASK_REVISION_REQUIRED", "TASK_INCONCLUSIVE", "TASK_BLOCKED"]}}}}},
+          "taskWaveCoverage": {"minItems": 1},
+          "waves": {
+            "minItems": 1,
+            "not": {
+              "contains": {
+                "anyOf": [
+                  {"properties": {"criticVerdict": {"enum": ["PENDING", "INTEGRATION_REVISION_REQUIRED", "INCONCLUSIVE", "BLOCKED"]}}},
+                  {"properties": {"mainReview": {"enum": ["PENDING", "LATER_WAVE_REQUIRED", "BLOCKED"]}}}
+                ]
+              }
+            }
+          },
+          "findings": {"not": {"contains": {"properties": {"status": {"enum": ["OPEN", "BLOCKED_BY_MISSING_EVIDENCE", "VERIFIED_BLOCKED"]}}}}}
+        }
+      }
+    }
+  ]
+}
