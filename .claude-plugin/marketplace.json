@@ -1,0 +1,13 @@
+{
+  "$schema": "https://anthropic.com/claude-code/marketplace.schema.json",
+  "name": "gauntlet-loop",
+  "owner": {"name": "Ayush Lochab"},
+  "plugins": [
+    {
+      "name": "gauntlet-loop",
+      "source": "./",
+      "description": "Explicitly invoked Builder-Critic multi-agent quality campaigns",
+      "version": "1.0.0"
+    }
+  ]
+}
