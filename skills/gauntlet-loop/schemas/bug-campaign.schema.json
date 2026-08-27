@@ -16,6 +16,8 @@
     "concurrency",
     "roleRouting",
     "tasks",
+    "events",
+    "artifacts",
     "areas",
     "candidates",
     "integration",
@@ -97,6 +99,42 @@
           "blocker": {"type": ["string", "null"]},
           "errorClass": {"enum": ["transient_transport", "rate_limit", "timeout", "semantic_failure", "programming_error", "side_effect_state_unknown", null]},
           "approvalRequestId": {"type": ["string", "null"]}
+        }
+      }
+    },
+    "events": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["eventId", "taskId", "attempt", "from", "to", "reasonEvidence", "timestamp"],
+        "properties": {
+          "eventId": {"type": "string", "minLength": 1},
+          "taskId": {"type": "string", "minLength": 1},
+          "attempt": {"type": "integer", "minimum": 1},
+          "from": {"type": ["string", "null"]},
+          "to": {"type": "string", "minLength": 1},
+          "reasonEvidence": {"type": "array", "minItems": 1, "items": {"type": "string", "minLength": 1}},
+          "timestamp": {"type": "string", "minLength": 1}
+        }
+      }
+    },
+    "artifacts": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["artifactId", "producerTaskId", "producerRole", "repositoryHead", "kind", "location", "verificationState"],
+        "properties": {
+          "artifactId": {"type": "string", "minLength": 1},
+          "sha256": {"type": ["string", "null"], "pattern": "^[a-f0-9]{64}$"},
+          "producerTaskId": {"type": "string", "minLength": 1},
+          "producerRole": {"type": "string", "minLength": 1},
+          "repositoryHead": {"type": "string", "minLength": 7},
+          "kind": {"enum": ["raw_evidence", "role_summary", "bug_spec", "diff", "test_receipt", "review_report", "integration_report"]},
+          "location": {"type": "string", "minLength": 1},
+          "claims": {"type": "array", "items": {"type": "string"}, "uniqueItems": true},
+          "verificationState": {"enum": ["UNVERIFIED", "VERIFIED", "REJECTED", "SUPERSEDED"]}
         }
       }
     },

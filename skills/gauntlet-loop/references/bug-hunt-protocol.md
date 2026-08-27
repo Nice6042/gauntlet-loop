@@ -8,6 +8,11 @@ Use this mode only when the owner explicitly asks Gauntlet Loop to find and fix 
 
 A role cannot approve its own output. Finder and Spec Verifier are read-only. Fixer is the only area writer. Fix Verifier is fresh and independent from both the Finder and Fixer.
 
+Every role follows `references/output-quality.md` and its bundled prompt
+template.
+The Main Agent passes sealed inputs and requires the defined output; adapters may
+translate tool syntax but cannot weaken role boundaries or evidence gates.
+
 ## Campaign planning and isolation
 
 The Main Agent must:
@@ -19,6 +24,8 @@ The Main Agent must:
 5. reserve shared or cross-area files for the Combiner unless the area contracts assign a single integration owner;
 6. create a ready queue and maintain the operator-selected concurrency policy;
 7. record base commit, worktree, area owner, role/model/effort, and artifact locations.
+
+Instantiate campaign orchestration with `templates/main-agent-prompt.md`.
 
 Do not claim full-system coverage unless the area map accounts for every
 in-scope component, search surface, target environment, and exclusion. Freeze
@@ -55,11 +62,15 @@ The Finder must:
 Every candidate receives a stable ID. A Finder may return zero candidates; no
 quota or forced finding is allowed. Preserve rejected and duplicate candidates
 so later Finders do not rediscover them. Required fields are defined in
-`../templates/bug-spec.md`.
+`templates/bug-spec.md`.
+
+Instantiate the Finder with `templates/finder-prompt.md`.
 
 ## Spec Verifier protocol
 
 A separate Spec Verifier adversarially reviews the complete candidate batch. It independently checks evidence, reproduces the behavior where feasible, traces the claimed root cause, inspects missed callers and boundaries, challenges alternatives, and determines whether the proposed repair is simple, complete, robust, and maintainable.
+
+Instantiate the Spec Verifier with `templates/spec-verifier-prompt.md`.
 
 The Spec Verifier decides each candidate independently:
 
@@ -98,6 +109,8 @@ One Fixer receives the complete approved batch for an area after specification r
 
 Before editing, the Fixer must reproduce each approved bug and validate that implementation evidence still supports the specification. It must not improvise around a materially wrong specification. Use `SPEC_INVALIDATED_DURING_IMPLEMENTATION` and return the candidate to specification review when new evidence changes the root cause or required design.
 
+Instantiate the Fixer with `templates/fixer-prompt.md`.
+
 For the approved batch, the Fixer:
 
 1. orders fixes by dependency and shared code path;
@@ -124,6 +137,9 @@ Per-bug implementation statuses are:
 ## Fresh Fix Verifier loop
 
 After the Fixer finishes the area batch, spawn a fresh Fix Verifier that has not participated as Finder or Fixer. Give it the approved specifications, original evidence, complete diff, updated system, and test evidence. Do not give it unsupported success claims as facts.
+
+Instantiate the fresh Fix Verifier with
+`templates/fix-verifier-prompt.md`.
 
 The Fix Verifier independently:
 
@@ -152,6 +168,9 @@ Area terminal statuses include:
 `AREA_NO_VERIFIED_BUGS` means no bug was verified within the recorded scope and evidence; it does not prove that no bug exists.
 
 ## Combination and final verification
+
+Use `templates/integration-roles.md` as three separate role contexts for
+Combiner, Final Tester, and Integration Verifier.
 
 After every area reaches a terminal state, the Combiner creates or uses an integration workspace and:
 

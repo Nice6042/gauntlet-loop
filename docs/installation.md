@@ -30,7 +30,8 @@ Preserve the complete directory: `SKILL.md`, `references/`, `templates/`,
 
 Confirm that the installed skill contains `SKILL.md`,
 `references/bug-hunt-protocol.md`, `references/concurrency.md`,
-`templates/bug-spec.md`, `templates/bug-campaign-state.md`, and both schemas.
+`references/output-quality.md`, all bundled `templates/*-prompt.md`,
+`templates/integration-roles.md`, both state templates, and both schemas.
 The installed skill name remains `gauntlet-loop`. Activation is explicit only:
 `Use Gauntlet Loop on this delivery task.` or
 `Use Gauntlet Loop in Bug Hunt mode on this repository.`

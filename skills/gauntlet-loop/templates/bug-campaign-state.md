@@ -35,10 +35,25 @@ Add rows for per-area or per-task overrides.
 
 ## Active-agent ledger
 
-| Task ID | Area | Role | Workspace | Model/effort | State | Started | Finished/blocker |
+| Task ID/attempt | Area | Role | Workspace | Model/effort | State | Started | Finished/blocker/approval |
 |---|---|---|---|---|---|---|---|
 
 Record each `CONCURRENCY_UNDERFILLED` interval, its reason, and the event that restored or ended replenishment.
+
+## Task transition ledger
+
+| Event ID | Task ID/attempt | From | To | Reason/evidence | Timestamp |
+|---|---|---|---|---|---|
+
+Never overwrite a failed attempt; append the next attempt under the same task ID.
+
+## Artifact and evidence ledger
+
+| Artifact ID/hash | Producer task/role | Repository base/head | Contents/claim | Verification state | Location |
+|---|---|---|---|---|---|
+
+Raw evidence and role summaries are separate artifacts. Every decision cites
+the exact artifact version it consumed.
 
 ## Candidate ledger
 

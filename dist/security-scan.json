@@ -1,5 +1,5 @@
 {
-  "filesScanned": 12,
+  "filesScanned": 19,
   "findings": [],
   "limitations": "Static package policy checks only; this is not semantic safety or behavioral certification.",
   "scanner": "gauntlet-loop-local-static-policy-v1",

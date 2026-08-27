@@ -1,8 +1,8 @@
 {
   "archive": "gauntlet-loop.skill",
-  "archiveSha256": "8f81f03636496db6d1909cd226ad26bf89250270bf6ece87dec5bfd593c8e2a5",
+  "archiveSha256": "2c2e98ce1fa708e90d43bb2ca7b7532fbde078b521969edb736e9f67022ee8cd",
   "errors": [],
-  "packagedFiles": 12,
+  "packagedFiles": 19,
   "ready": true,
   "version": "1.1.0",
   "warnings": []

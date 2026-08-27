@@ -174,6 +174,8 @@ The strongest reusable patterns came from these exact sources:
 - Kept one installable skill and added two explicit campaign modes rather than creating a second implicit skill.
 - Added `references/bug-hunt-protocol.md` and `references/concurrency.md` instead of turning the canonical file into a monolith.
 - Added owner intake, bug specification, campaign-state templates, and two JSON Schemas.
+- Added `references/output-quality.md` and sealed prompts for Main Agent, Finder, Spec Verifier, Fixer, fresh Fix Verifier, Combiner, Final Tester, and Integration Verifier.
+- Added evidence classification, three independent review lenses, assumption/falsifier audits, consequence-before-dedup triage, required output receipts, and pre-handoff self-checks.
 - Added causal evidence, zero-finding honesty, three specification decisions, batched area fixes, fresh post-fix review, final testing, integration verification, and Main post-merge verification.
 - Added continuous useful-work replenishment with truthful underfill, queue backpressure, failure classification, approval identity, and resume rules.
 - Added deterministic local validation and `.skill` packaging as the single repository validation entry point.

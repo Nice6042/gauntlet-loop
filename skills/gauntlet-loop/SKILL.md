@@ -436,9 +436,11 @@ Load only what the current phase requires:
 
 - `references/core-protocol.md` — compact shared sequence;
 - `references/quality-contract.md` and `references/metrics.md` — verdict gates;
+- `references/output-quality.md` — evidence, finding, and handoff quality gate;
 - `references/concurrency.md` — operator-controlled scheduling and replenishment;
 - `references/bug-hunt-protocol.md` — complete Finder-Verifier-Fixer mode;
 - `templates/owner-intake.md` — frozen campaign decisions;
+- `templates/*-prompt.md` and `templates/integration-roles.md` — sealed role contracts;
 - `templates/bug-spec.md` and `templates/bug-campaign-state.md` — Bug Hunt state;
 - `schemas/` — machine-checkable Bug Hunt handoff and checkpoint contracts;
 - `adapters/` — host capability mappings.

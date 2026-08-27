@@ -37,15 +37,23 @@ REQUIRED_PATHS = (
     ".agents/plugins/marketplace.json",
     "evals/activation-cases.json",
     "evals/bug-hunt-cases.json",
+    "evals/output-quality-cases.json",
     "skills/gauntlet-loop/SKILL.md",
     "skills/gauntlet-loop/references/core-protocol.md",
     "skills/gauntlet-loop/references/metrics.md",
     "skills/gauntlet-loop/references/quality-contract.md",
+    "skills/gauntlet-loop/references/output-quality.md",
     "skills/gauntlet-loop/references/concurrency.md",
     "skills/gauntlet-loop/references/bug-hunt-protocol.md",
     "skills/gauntlet-loop/templates/owner-intake.md",
     "skills/gauntlet-loop/templates/bug-spec.md",
     "skills/gauntlet-loop/templates/bug-campaign-state.md",
+    "skills/gauntlet-loop/templates/main-agent-prompt.md",
+    "skills/gauntlet-loop/templates/finder-prompt.md",
+    "skills/gauntlet-loop/templates/spec-verifier-prompt.md",
+    "skills/gauntlet-loop/templates/fixer-prompt.md",
+    "skills/gauntlet-loop/templates/fix-verifier-prompt.md",
+    "skills/gauntlet-loop/templates/integration-roles.md",
     "skills/gauntlet-loop/schemas/bug-spec.schema.json",
     "skills/gauntlet-loop/schemas/bug-campaign.schema.json",
     "skills/gauntlet-loop/adapters/generic.md",
@@ -157,10 +165,17 @@ def validate_frontmatter(skill_text: str, version: str, errors: list[str], warni
         warnings.append(f"SKILL.md is {line_count} lines; progressive-disclosure guidance recommends at most 500")
 
 
-def validate_local_references(skill_text: str, errors: list[str]) -> None:
-    for relative in sorted(set(LOCAL_SKILL_PATH.findall(skill_text))):
-        if not (SKILL_DIR / relative).is_file() and not (SKILL_DIR / relative).is_dir():
-            errors.append(f"SKILL.md references missing skill path: {relative}")
+def validate_local_references(errors: list[str]) -> None:
+    for source in sorted(SKILL_DIR.rglob("*.md")):
+        try:
+            text = source.read_text(encoding="utf-8")
+        except (OSError, UnicodeError) as exc:
+            errors.append(f"cannot inspect references in {source.relative_to(ROOT).as_posix()}: {exc}")
+            continue
+        for relative in sorted(set(LOCAL_SKILL_PATH.findall(text))):
+            if not (SKILL_DIR / relative).is_file() and not (SKILL_DIR / relative).is_dir():
+                source_name = source.relative_to(SKILL_DIR).as_posix()
+                errors.append(f"{source_name} references missing skill path: {relative}")
 
 
 def validate_manifests(version: str, errors: list[str]) -> None:
@@ -193,7 +208,11 @@ def validate_schemas(errors: list[str]) -> None:
             errors.append(f"{relative} must declare JSON Schema draft 2020-12")
 
 def validate_evals(errors: list[str]) -> None:
-    for relative in ("evals/activation-cases.json", "evals/bug-hunt-cases.json"):
+    for relative in (
+        "evals/activation-cases.json",
+        "evals/bug-hunt-cases.json",
+        "evals/output-quality-cases.json",
+    ):
         parsed = load_json(relative, errors)
         if not isinstance(parsed, dict):
             continue
@@ -308,7 +327,7 @@ def validate_and_package() -> tuple[list[str], list[str]]:
         errors.append(f"cannot read SKILL.md: {exc}")
     if skill_text:
         validate_frontmatter(skill_text, version, errors, warnings)
-        validate_local_references(skill_text, errors)
+        validate_local_references(errors)
 
     validate_manifests(version, errors)
     validate_schemas(errors)

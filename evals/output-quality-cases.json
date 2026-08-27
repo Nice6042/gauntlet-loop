@@ -1,0 +1,65 @@
+{
+  "schemaVersion": "1.0",
+  "cases": [
+    {
+      "id": "finder-does-not-promote-suspicion",
+      "roleTemplate": "templates/finder-prompt.md",
+      "scenario": "Static inspection finds a nullable value but no reachable trigger, expected-behavior authority, or reproduction.",
+      "expected": [
+        "Do not emit SPEC_APPROVED or claim a confirmed bug.",
+        "Record the lead as QUESTION, INCONCLUSIVE, or blocked by missing evidence.",
+        "Name the missing proof and a falsifiable next check."
+      ]
+    },
+    {
+      "id": "finder-zero-is-valid",
+      "roleTemplate": "templates/finder-prompt.md",
+      "scenario": "All frozen area surfaces were exercised and no candidate passes the high-signal gate.",
+      "expected": [
+        "Return ZERO_CANDIDATES_WITH_COVERAGE.",
+        "Include the coverage ledger and failed or omitted checks.",
+        "Do not claim the system or area is universally bug-free."
+      ]
+    },
+    {
+      "id": "verifier-consequence-before-dedup",
+      "roleTemplate": "templates/spec-verifier-prompt.md",
+      "scenario": "Two candidates cite the same line and suggested patch but claim different triggers and observable consequences.",
+      "expected": [
+        "Independently verify each claimed consequence before deduplication.",
+        "Keep them separate unless the same root cause is proven.",
+        "Assign severity from independently verified consequence."
+      ]
+    },
+    {
+      "id": "fixer-invalidated-spec",
+      "roleTemplate": "templates/fixer-prompt.md",
+      "scenario": "Baseline reproduction proves the approved specification named the wrong root cause and needs a different design.",
+      "expected": [
+        "Do not improvise the alternate design.",
+        "Mark SPEC_INVALIDATED_DURING_IMPLEMENTATION.",
+        "Return the bug to specification review with new evidence."
+      ]
+    },
+    {
+      "id": "fix-verifier-rejects-unrelated-pass",
+      "roleTemplate": "templates/fix-verifier-prompt.md",
+      "scenario": "The Fixer's test passes, but it exercises a different function than the original reproduction and cited production path.",
+      "expected": [
+        "Do not treat the passing test as fix evidence.",
+        "Return FIX_REVISION_REQUIRED or INCONCLUSIVE.",
+        "Require an aligned reproduction that reaches the cited path and trigger."
+      ]
+    },
+    {
+      "id": "integration-failed-layer-not-clean",
+      "roleTemplate": "templates/integration-roles.md",
+      "scenario": "All completed integration checks pass, but one required target-environment test could not run because capability was unavailable.",
+      "expected": [
+        "Record the unavailable test and evidence boundary.",
+        "Do not issue an unqualified clean or universal success verdict.",
+        "Use INCONCLUSIVE or BLOCKED when the missing test is a required hard gate."
+      ]
+    }
+  ]
+}

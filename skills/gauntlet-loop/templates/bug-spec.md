@@ -3,6 +3,9 @@
 ## Identity
 
 - Bug ID:
+- Campaign/task IDs:
+- Repository and base/head:
+- Specification artifact ID/hash:
 - Area/worktree:
 - Finder:
 - Spec Verifier:
@@ -22,7 +25,7 @@
 - Reproduction prerequisites:
 - Minimal deterministic reproduction:
 - Observed output and evidence location:
-- Evidence strength: direct / correlational / testimonial / absence
+- Evidence strength: direct / boundary observation / static causal trace / correlational / testimonial / absence
 - Affected environments:
 - Scope and known exclusions:
 

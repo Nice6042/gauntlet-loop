@@ -16,6 +16,11 @@ resumable state, per-role/task model and effort routing, and operator-selected
 `ADAPTIVE`, `CEILING(N)`, or continuously replenished `SUSTAINED(N)`
 concurrency.
 
+Bug Hunt ships sealed prompts for Main Agent, Finder, Spec Verifier, Fixer,
+fresh Fix Verifier, Combiner, Final Tester, and Integration Verifier, plus a
+shared evidence/output-quality contract. Hosts route these templates to the
+operator-selected model and effort.
+
 ## Install
 
 ### Agent Skills CLI

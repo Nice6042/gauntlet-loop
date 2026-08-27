@@ -30,13 +30,23 @@ class ValidationAndPackagingTests(unittest.TestCase):
 
         with zipfile.ZipFile(archive) as package:
             members = set(package.namelist())
-        self.assertIn("gauntlet-loop/SKILL.md", members)
-        self.assertIn("gauntlet-loop/references/bug-hunt-protocol.md", members)
-        self.assertIn("gauntlet-loop/references/concurrency.md", members)
-        self.assertIn("gauntlet-loop/templates/bug-spec.md", members)
-        self.assertIn("gauntlet-loop/templates/bug-campaign-state.md", members)
-        self.assertIn("gauntlet-loop/schemas/bug-spec.schema.json", members)
-        self.assertIn("gauntlet-loop/schemas/bug-campaign.schema.json", members)
+        expected_members = {
+            "gauntlet-loop/SKILL.md",
+            "gauntlet-loop/references/bug-hunt-protocol.md",
+            "gauntlet-loop/references/concurrency.md",
+            "gauntlet-loop/references/output-quality.md",
+            "gauntlet-loop/templates/main-agent-prompt.md",
+            "gauntlet-loop/templates/finder-prompt.md",
+            "gauntlet-loop/templates/spec-verifier-prompt.md",
+            "gauntlet-loop/templates/fixer-prompt.md",
+            "gauntlet-loop/templates/fix-verifier-prompt.md",
+            "gauntlet-loop/templates/integration-roles.md",
+            "gauntlet-loop/templates/bug-spec.md",
+            "gauntlet-loop/templates/bug-campaign-state.md",
+            "gauntlet-loop/schemas/bug-spec.schema.json",
+            "gauntlet-loop/schemas/bug-campaign.schema.json",
+        }
+        self.assertTrue(expected_members.issubset(members))
         self.assertTrue(all(not name.startswith("/") and ".." not in Path(name).parts for name in members))
 
     def test_frontmatter_rejects_wrong_product_version(self) -> None:
