@@ -1,0 +1,11 @@
+{
+  "name": "gauntlet-loop",
+  "plugins": [
+    {
+      "name": "gauntlet-loop",
+      "source": "./",
+      "description": "Explicitly invoked Builder-Critic multi-agent quality campaigns",
+      "version": "1.0.0"
+    }
+  ]
+}
