@@ -14,7 +14,7 @@ concurrency:
 
 jobs:
   certify:
-    if: github.event.head_commit.message == 'release: certify Agent Skills Codex and Claude installs'
+    if: "github.event.head_commit.message == 'release: certify Agent Skills Codex and Claude installs'"
     runs-on: ubuntu-24.04
     timeout-minutes: 60
     steps:
@@ -23,7 +23,7 @@ jobs:
           fetch-depth: 0
       - uses: actions/setup-python@v5
         with:
-          python-version: '3.13'
+          python-version: "3.13"
 
       - name: Revalidate certified public source
         shell: bash
